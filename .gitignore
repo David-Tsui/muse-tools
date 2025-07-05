@@ -1,5 +1,18 @@
+# dependencies
 node_modules
+
+# build
 dist
 
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# misc
+.DS_Store
+*.pem
+
+# auto-generated files
 auto-imports.d.ts
 components.d.ts
