@@ -30,36 +30,34 @@
       :key="octaveIdx"
     >
       <div class="piano-white-keys">
-        <div
+        <PianoKey
           v-for="(key, idx) in octave.white"
           :key="key.note"
-          class="key white-key"
-          :class="{ active: activeNotes?.includes(key.note) }"
-          :data-note="key.note"
+          :keyData="key"
+          :isActive="Boolean(activeNotes?.includes(key.note))"
+          is-white
+          :disabled="Boolean(pressDisabled)"
           :style="{ gridColumn: idx + 1 }"
-          @mousedown="pressDisabled ? onKeySetActiveRangeStart(key.note) : onMouseDown(key.note)"
-          @mouseenter="!pressDisabled && onMouseEnter(key.note)"
-          @mouseup="!pressDisabled && onMouseUp(key.note)"
-          @mouseleave="!pressDisabled && onMouseLeave(key.note)"
-        >
-          <span class="key-label">{{ key.label }}</span>
-        </div>
+          @on-mousedown="pressDisabled ? onKeySetActiveRangeStart(key.note) : onMouseDown(key.note)"
+          @on-mouseenter="!pressDisabled && onMouseEnter(key.note)"
+          @on-mouseup="!pressDisabled && onMouseUp(key.note)"
+          @on-mouseleave="!pressDisabled && onMouseLeave(key.note)"
+        />
       </div>
       <div class="piano-black-keys">
-        <div
-          v-for="(key, idx) in octave.black"
+        <PianoKey
+          v-for="(key) in octave.black"
           :key="key.note"
-          class="key black-key"
-          :class="{ active: activeNotes?.includes(key.note) }"
-          :data-note="key.note"
+          :keyData="key"
+          :isActive="Boolean(activeNotes?.includes(key.note))"
+          :is-white="false"
+          :disabled="Boolean(pressDisabled)"
           :style="{ gridColumn: getBlackKeyGridColumnInOctave(key.note), pointerEvents: pressDisabled ? 'auto' : undefined }"
-          @mousedown="pressDisabled ? onKeySetActiveRangeStart(key.note) : onMouseDown(key.note)"
-          @mouseenter="!pressDisabled && onMouseEnter(key.note)"
-          @mouseup="!pressDisabled && onMouseUp(key.note)"
-          @mouseleave="!pressDisabled && onMouseLeave(key.note)"
-        >
-          <span class="key-label">{{ key.label }}</span>
-        </div>
+          @on-mousedown="pressDisabled ? onKeySetActiveRangeStart(key.note) : onMouseDown(key.note)"
+          @on-mouseenter="!pressDisabled && onMouseEnter(key.note)"
+          @on-mouseup="!pressDisabled && onMouseUp(key.note)"
+          @on-mouseleave="!pressDisabled && onMouseLeave(key.note)"
+        />
       </div>
     </div>
   </div>
@@ -70,6 +68,7 @@ import { ref, computed } from 'vue'
 import { keysAll, keysDimension } from '../constant/piano'
 import { debounce } from 'lodash-es'
 import { usePianoHighlightDrag } from '../composables/usePianoHighlightDrag'
+import PianoKey from './PianoKey.vue';
 
 const props = defineProps<{
   keys: PianoKey[]
@@ -263,6 +262,20 @@ const {
   }
 }
 
+.piano-keyboard.mini {
+  width: unset;
+
+  .piano-key--white {
+    border-radius: 0 0 4px 4px;
+  }
+  .piano-key--black {
+    border-radius: 0 0 3px 3px;
+  }
+  .piano-key__label {
+    font-size: 10px;
+  }
+}
+
 .piano-keyboard .highlight-window {
   position: absolute;
   top: 0;
@@ -281,12 +294,13 @@ const {
   background: rgba(0,0,0,0.45);
   z-index: 4;
   pointer-events: none;
-}
-.piano-keyboard .shadow-overlay.left {
-  left: 0;
-}
-.piano-keyboard .shadow-overlay.right {
-  right: 0;
+
+  &.left {
+    left: 0;
+  }
+  &.right {
+    right: 0;
+  }
 }
 
 .piano-octave {
@@ -315,48 +329,7 @@ const {
   width: 100%;
 }
 
-.key {
-  position: relative;
-  cursor: pointer;
-  border-style: solid;
-  border-color: #34495e;
-  border-width: var(--white-key-border-width);
-  transition: all 0.1s ease;
-  user-select: none;
-}
-
-.white-key {
-  width: var(--white-key-width);
-  min-width: var(--white-key-width);
-  height: var(--white-key-height);
-  background: linear-gradient(to bottom, #ffffff 0%, #f8f8f8 100%);
-  border-radius: 0 0 8px 8px;
-  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-
-  &:is(.mini *) {
-    border-radius: 0 0 4px 4px;
-  }
-}
-
-.black-key {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  width: var(--black-key-width);
-  min-width: var(--black-key-width);
-  height: var(--black-key-height);
-  background: linear-gradient(to bottom, #2c3e50 0%, #1a252f 100%);
-  border-radius: 0 0 5px 5px;
-  z-index: 2;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
-
-  &:is(.mini *) {
-    border-radius: 0 0 3px 3px;
-  }
-}
-
-.key:is(:not(.mini *)) {
+.piano-key:is(:not(.mini *)) {
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
@@ -364,37 +337,6 @@ const {
   &:active {
     transform: translateY(3px);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
-  }
-}
-
-.white-key.active {
-  background: linear-gradient(to bottom, #e8e8e8 0%, #d0d0d0 100%);
-}
-
-.black-key.active {
-  background: linear-gradient(to bottom, #1a252f 0%, #0f1419 100%);
-}
-
-.key-label {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 12px;
-  font-weight: bold;
-  pointer-events: none;
-
-  &:is(.mini *) {
-    font-size: 10px;
-  }
-
-  &:is(.white-key *) {
-    color: var(--white-key-label-color);
-  }
-
-  &:is(.black-key *) {
-    color: var(--black-key-label-color);
-    bottom: 8px;
   }
 }
 </style>
