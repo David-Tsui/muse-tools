@@ -1,6 +1,5 @@
 type PianoKey = {
-  note: string,
+  note: string // 'C3', 'C#3', 'D3', etc.
   type: 'white' | 'black',
-  label: string,
-  style?: Record<string, string>
+  label: string
 }

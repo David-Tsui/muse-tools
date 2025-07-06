@@ -24,3 +24,38 @@
 <script setup lang="ts">
 defineProps<{ volume: number }>()
 </script>
+
+<style scoped>
+.controls {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.control-button {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 10px 20px;
+  margin: 0 10px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+}
+
+.control-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.volume-control {
+  margin-top: 15px;
+}
+
+.volume-slider {
+  width: 200px;
+  margin: 0 10px;
+}
+</style>

@@ -10,14 +10,17 @@
   },
   "dependencies": {
     "abcjs": "^6.4.4",
+    "lodash-es": "^4.17.21",
     "tonal": "^5.2.1",
     "tone": "^15.0.4",
     "vue": "^3.3.0"
   },
   "devDependencies": {
+    "@types/lodash-es": "^4.17.12",
     "@vitejs/plugin-vue": "^4.0.0",
     "@vue/test-utils": "^2.4.6",
     "jsdom": "^26.0.0",
+    "sass": "^1.89.2",
     "typescript": "^5.0.0",
     "unplugin-auto-import": "^0.17.0",
     "unplugin-vue-components": "^0.25.0",

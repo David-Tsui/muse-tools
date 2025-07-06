@@ -1,10 +1,14 @@
 <template>
   <div class="piano-container">
     <h1 class="piano-title">🎹 Vue Piano</h1>
-    <!-- 傳遞滑鼠事件 handler 給 PianoKeyboard -->
+    <div class="piano-control-window">
+      <PianoControlsWindow v-model="activeRangeKeys" />
+    </div>
+    <PianoRangeInput v-model:activeRangeKeys="activeRangeKeys" />
     <PianoKeyboard
-      :keys="keys"
+      :keys="keysAll"
       :activeNotes="activeNotes"
+      :activeRangeKeys="activeRangeKeys"
       @play="playNote"
       @stop="stopNote"
       @key-mousedown="handleKeyMouseDown"
@@ -17,7 +21,7 @@
         {{ note }}
       </div>
     </div>
-    <PianoControls
+    <PianoControlsPanel
       :volume="volume"
       @play-scale="playScale"
       @play-chord="playChord"
@@ -28,38 +32,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, shallowRef, onMounted, onUnmounted } from 'vue'
+import { ref, shallowRef, onMounted } from 'vue'
 import PianoKeyboard from './PianoKeyboard.vue'
-import PianoControls from './PianoControls.vue'
+import PianoControlsPanel from './PianoControlsPanel.vue'
 import * as Tone from 'tone'
+import { keysAll } from '../constant/piano'
 
 const activeNotes = ref<string[]>([]);
+const activeRangeKeys = ref<{ start: string, end: string }>({ start: 'C4', end: 'B5' });
+
 const volume = ref(0.5);
 const synth = shallowRef<Tone.PolySynth | null>(null);
 const isAudioStarted = ref(false);
 const mouseDown = ref(false)
 const lastHoveredKey = ref<string | null>(null)
-
-// Piano key configuration
-const keys = reactive<PianoKey[]>([
-  { note: 'C4', type: 'white', label: 'C', style: {} },
-  { note: 'C#4', type: 'black', label: 'C#', style: { left: '43px' } },
-  { note: 'D4', type: 'white', label: 'D', style: {} },
-  { note: 'D#4', type: 'black', label: 'D#', style: { left: '105px' } },
-  { note: 'E4', type: 'white', label: 'E', style: {} },
-  { note: 'F4', type: 'white', label: 'F', style: {} },
-  { note: 'F#4', type: 'black', label: 'F#', style: { left: '228px' } },
-  { note: 'G4', type: 'white', label: 'G', style: {} },
-  { note: 'G#4', type: 'black', label: 'G#', style: { left: '290px' } },
-  { note: 'A4', type: 'white', label: 'A', style: {} },
-  { note: 'A#4', type: 'black', label: 'A#', style: { left: '352px' } },
-  { note: 'B4', type: 'white', label: 'B', style: {} },
-  { note: 'C5', type: 'white', label: 'C', style: {} },
-  { note: 'C#5', type: 'black', label: 'C#', style: { left: '476px' } },
-  { note: 'D5', type: 'white', label: 'D', style: {} },
-  { note: 'D#5', type: 'black', label: 'D#', style: { left: '538px' } },
-  { note: 'E5', type: 'white', label: 'E', style: {} }
-]);
 
 // Initialize audio
 const initAudio = async () => {
@@ -240,7 +226,7 @@ onMounted(() => {
   document.addEventListener('touchstart', handleUserInteraction);
 
   // Add data attributes for animation targeting
-  keys.forEach(key => {
+  keysAll.forEach(key => {
     setTimeout(() => {
       const element = document.querySelector(`[data-note="${key.note}"]`);
       if (element) {
@@ -258,7 +244,7 @@ onMounted(() => {
   })
 });
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
   document.removeEventListener('keydown', handleKeyDown);
   document.removeEventListener('keyup', handleKeyUp);
   document.removeEventListener('click', handleUserInteraction);
@@ -278,7 +264,7 @@ onUnmounted(() => {
 });
 </script>
 
-<style>
+<style scoped>
 .piano-container {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   backdrop-filter: blur(10px);
@@ -297,76 +283,7 @@ onUnmounted(() => {
 }
 
 .piano-keyboard {
-  display: flex;
-  position: relative;
-  background: #2c3e50;
-  border-radius: 10px;
   padding: 20px;
-  box-shadow: inset 0 5px 15px rgba(0, 0, 0, 0.3);
-}
-
-.key {
-  position: relative;
-  cursor: pointer;
-  border: 2px solid #34495e;
-  transition: all 0.1s ease;
-  user-select: none;
-}
-
-.white-key {
-  width: 60px;
-  height: 200px;
-  background: linear-gradient(to bottom, #ffffff 0%, #f8f8f8 100%);
-  border-radius: 0 0 8px 8px;
-  margin: 0 1px;
-  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-}
-
-.black-key {
-  width: 35px;
-  height: 120px;
-  background: linear-gradient(to bottom, #2c3e50 0%, #1a252f 100%);
-  border-radius: 0 0 5px 5px;
-  position: absolute;
-  z-index: 2;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
-}
-
-.key:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
-}
-
-.key.active {
-  transform: translateY(3px);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
-}
-
-.white-key.active {
-  background: linear-gradient(to bottom, #e8e8e8 0%, #d0d0d0 100%);
-}
-
-.black-key.active {
-  background: linear-gradient(to bottom, #1a252f 0%, #0f1419 100%);
-}
-
-.key-label {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 12px;
-  font-weight: bold;
-  pointer-events: none;
-}
-
-.white-key .key-label {
-  color: #2c3e50;
-}
-
-.black-key .key-label {
-  color: #ecf0f1;
-  bottom: 8px;
 }
 
 .current-notes {
@@ -386,38 +303,5 @@ onUnmounted(() => {
   font-weight: bold;
   backdrop-filter: blur(5px);
   border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.controls {
-  text-align: center;
-  margin-top: 20px;
-}
-
-.control-button {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 10px 20px;
-  margin: 0 10px;
-  border-radius: 25px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
-  backdrop-filter: blur(5px);
-  transition: all 0.3s ease;
-}
-
-.control-button:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-}
-
-.volume-control {
-  margin-top: 15px;
-}
-
-.volume-slider {
-  width: 200px;
-  margin: 0 10px;
 }
 </style>
