@@ -1,6 +1,11 @@
 <template>
   <div class="piano-container">
     <h1 class="piano-title">🎹 Vue Piano</h1>
+    <Spinner v-if="isAudioLoading">
+      <template #loading-text>
+        Loading piano sounds... ({{ loadedCount }}/{{ totalToLoad }})
+      </template>
+    </Spinner>
     <div class="piano-control-window">
       <PianoControlsWindow v-model="activeRangeKeys" />
     </div>
@@ -29,144 +34,117 @@
       @play-scale="playScale"
       @play-chord="playChord"
       @stop-all="stopAll"
-      @update-volume="updateVolume"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, shallowRef, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import PianoKeyboard from './PianoKeyboard.vue'
 import PianoControlsPanel from './PianoControlsPanel.vue'
-import * as Tone from 'tone'
-import { keysAll } from '../constant/piano'
+import { keysAll, PIANO_AUDIO_SOURCES } from '../constant/piano'
+import Spinner from './Spinner.vue'
 
 const activeNotes = ref<string[]>([]);
-const activeRangeKeys = ref<{ start: string, end: string }>({ start: 'C4', end: 'B5' });
+const activeRangeKeys = ref<{ start: string, end: string }>({ start: 'C4', end: 'B5' })
 const keyRangeCount = ref(14)
-
-const volume = ref(0.5);
-const synth = shallowRef<Tone.PolySynth | null>(null);
-const isAudioStarted = ref(false);
+const volume = ref(0.5)
 const mouseDown = ref(false)
 const lastHoveredKey = ref<string | null>(null)
 
-// Initialize audio
-const initAudio = async () => {
-  if (!isAudioStarted.value) {
-    try {
-      await Tone.start();
-      synth.value = new Tone.PolySynth(Tone.Synth, {
-        oscillator: {
-          type: 'sine'
-        },
-        envelope: {
-          attack: 0.1,
-          decay: 0.2,
-          sustain: 0.5,
-          release: 0.8
+const audioMap = new Map<string, HTMLAudioElement>()
+const isAudioLoading = ref(true)
+const loadedCount = ref(0)
+const totalToLoad = Object.values(PIANO_AUDIO_SOURCES).filter(Boolean).length
+
+function preloadAllAudio() {
+  loadedCount.value = 0
+  isAudioLoading.value = true
+  const promises: Promise<void>[] = []
+  Object.entries(PIANO_AUDIO_SOURCES).forEach(([note, src]) => {
+    if (src) {
+      const audio = new Audio(src)
+      audio.preload = 'auto'
+      audio.oncanplaythrough = () => {
+        loadedCount.value++
+        if (loadedCount.value >= totalToLoad) {
+          isAudioLoading.value = false
         }
-      }).toDestination();
-      synth.value.volume.value = Tone.gainToDb(volume.value);
-      isAudioStarted.value = true;
-    } catch (error) {
-      console.error('Audio initialization failed:', error);
+      }
+      audio.onerror = () => {
+        loadedCount.value++
+        if (loadedCount.value >= totalToLoad) {
+          isAudioLoading.value = false
+        }
+      }
+      audioMap.set(note, audio)
+      // 強制觸發載入
+      promises.push(audio.load?.() ?? Promise.resolve())
     }
+  })
+}
+
+const playNote = (note: string) => {
+  const audio = audioMap.get(note)
+  if (!audio) return
+  audio.currentTime = 0
+  audio.volume = volume.value
+  audio.play().catch(() => {})
+  if (!activeNotes.value.includes(note)) {
+    activeNotes.value.push(note)
   }
-};
+}
 
-// Play a note
-const playNote = async (note: string) => {
-  try {
-    await initAudio();
-
-    if (!activeNotes.value.includes(note)) {
-      activeNotes.value.push(note);
-      synth.value?.triggerAttack(note);
-    }
-  } catch (error) {
-    console.error('Error playing note:', error);
-  }
-};
-
-// Stop a note
 const stopNote = (note: string) => {
-  const index = activeNotes.value.indexOf(note);
-  if (index > -1) {
-    activeNotes.value.splice(index, 1);
-    if (synth.value) {
-      synth.value.triggerRelease(note);
-    }
+  const audio = audioMap.get(note)
+  if (audio) {
+    audio.pause()
+    audio.currentTime = 0
   }
-};
+  const index = activeNotes.value.indexOf(note)
+  if (index > -1) {
+    activeNotes.value.splice(index, 1)
+  }
+}
 
 // Play a scale
 const playScale = async () => {
   try {
-    await initAudio();
-    const scale = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'];
-
-    for (let i = 0; i < scale.length; i++) {
-      setTimeout(() => {
-        synth.value?.triggerAttackRelease(scale[i], '8n');
-        activeNotes.value.push(scale[i]);
-        setTimeout(() => {
-          const index = activeNotes.value.indexOf(scale[i]);
-          if (index > -1) {
-            activeNotes.value.splice(index, 1);
-          }
-        }, 150);
-      }, i * 150);
-    }
+    const scale = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5']
+    await scale.reduce((prev, note) => {
+      return prev.then(async () => {
+        playNote(note)
+        await new Promise(res => setTimeout(res, 150))
+        stopNote(note)
+      })
+    }, Promise.resolve())
   } catch (error) {
-    console.error('Error playing scale:', error);
+    console.error('Error playing scale:', error)
   }
-};
+}
 
 // Play a chord
 const playChord = async () => {
   try {
-    await initAudio();
-    const chord = ['C4', 'E4', 'G4', 'C5'];
-
+    const chord = ['C4', 'E4', 'G4', 'C5']
     chord.forEach(note => {
-      if (synth.value) {
-        synth.value.triggerAttackRelease(note, '2n');
-        activeNotes.value.push(note);
-        setTimeout(() => {
-          const index = activeNotes.value.indexOf(note);
-          if (index > -1) {
-            activeNotes.value.splice(index, 1);
-          }
-        }, 1500);
-      }
-    });
+      playNote(note)
+      setTimeout(() => {
+        stopNote(note)
+      }, 1500)
+    })
   } catch (error) {
-    console.error('Error playing chord:', error);
+    console.error('Error playing chord:', error)
   }
-};
+}
 
 // Stop all notes
 const stopAll = () => {
-  if (synth.value) {
-    synth.value.releaseAll();
-  }
-  activeNotes.value = [];
-};
-
-// Update volume
-const updateVolume = () => {
-  if (synth.value) {
-    synth.value.volume.value = Tone.gainToDb(volume.value);
-  }
-};
-
-// Add user interaction handler for audio context
-const handleUserInteraction = async () => {
-  if (!isAudioStarted.value) {
-    await initAudio();
-  }
-};
+  activeNotes.value.forEach(note => {
+    stopNote(note)
+  })
+  activeNotes.value = []
+}
 
 // Keyboard controls
 const keyMap: { [key: string]: string } = {
@@ -222,12 +200,9 @@ const handleKeyMouseLeave = (note: string) => {
 }
 
 onMounted(() => {
+  preloadAllAudio()
   document.addEventListener('keydown', handleKeyDown);
   document.addEventListener('keyup', handleKeyUp);
-
-  // Add user interaction listeners to start audio context
-  document.addEventListener('click', handleUserInteraction);
-  document.addEventListener('touchstart', handleUserInteraction);
 
   // Add data attributes for animation targeting
   keysAll.forEach(key => {
@@ -246,13 +221,11 @@ onMounted(() => {
       lastHoveredKey.value = null
     }
   })
-});
+})
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', handleKeyDown);
   document.removeEventListener('keyup', handleKeyUp);
-  document.removeEventListener('click', handleUserInteraction);
-  document.removeEventListener('touchstart', handleUserInteraction);
   document.removeEventListener('mouseup', () => {
     mouseDown.value = false
     if (lastHoveredKey.value) {
@@ -260,12 +233,7 @@ onBeforeUnmount(() => {
       lastHoveredKey.value = null
     }
   })
-
-  // Clean up Tone.js
-  if (synth.value) {
-    synth.value.dispose();
-  }
-});
+})
 </script>
 
 <style scoped>
