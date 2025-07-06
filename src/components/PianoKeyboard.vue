@@ -37,7 +37,7 @@
           :class="{ active: activeNotes?.includes(key.note) }"
           :data-note="key.note"
           :style="{ gridColumn: idx + 1 }"
-          @mousedown="!pressDisabled && onMouseDown(key.note)"
+          @mousedown="pressDisabled ? onKeySetActiveRangeStart(key.note) : onMouseDown(key.note)"
           @mouseenter="!pressDisabled && onMouseEnter(key.note)"
           @mouseup="!pressDisabled && onMouseUp(key.note)"
           @mouseleave="!pressDisabled && onMouseLeave(key.note)"
@@ -52,8 +52,8 @@
           class="key black-key"
           :class="{ active: activeNotes?.includes(key.note) }"
           :data-note="key.note"
-          :style="{ gridColumn: getBlackKeyGridColumnInOctave(key.note), pointerEvents: pressDisabled ? 'none' : undefined }"
-          @mousedown="!pressDisabled && onMouseDown(key.note)"
+          :style="{ gridColumn: getBlackKeyGridColumnInOctave(key.note), pointerEvents: pressDisabled ? 'auto' : undefined }"
+          @mousedown="pressDisabled ? onKeySetActiveRangeStart(key.note) : onMouseDown(key.note)"
           @mouseenter="!pressDisabled && onMouseEnter(key.note)"
           @mouseup="!pressDisabled && onMouseUp(key.note)"
           @mouseleave="!pressDisabled && onMouseLeave(key.note)"
@@ -103,12 +103,15 @@ const highlightCount = ref(14)
 
 const whiteKeys = computed(() => props.keys.filter(k => k.type === 'white'))
 
-const activeRange  = computed({
-  get: () => props.activeRangeKeys || null,
-  set: (value) => {
-    emit('update:activeRangeKeys', value)
+const activeRange  = ref<{ start: string, end: string } | null>(props.activeRangeKeys || null)
+
+watch(() => props.activeRangeKeys, (newRange) => {
+  if (newRange) {
+    activeRange.value = { start: newRange.start, end: newRange.end }
+  } else {
+    activeRange.value = null
   }
-})
+}, {  deep: true })
 
 function getWhiteKeyIndex(note: string) {
   return whiteKeys.value.findIndex(k => k.note === note)
@@ -170,26 +173,8 @@ const currentKeyboardWidth = computed(() => {
   return `${count * currentWhiteKeyWidth.value}px`
 })
 
-// 點擊陰影區域
-// function onShadowClick(side: 'left' | 'right', e: MouseEvent) {
-//   const rect = (e.target as HTMLElement).getBoundingClientRect()
-//   const x = e.clientX - rect.left
-//   let idx = Math.floor(x / keyWidth)
-//   if (side === 'right') {
-//     idx += getWhiteKeyIndex(activeRange.value!.start) + highlightCount.value
-//   }
-//   idx = Math.max(0, Math.min(whiteKeys.value.length - highlightCount.value, idx))
-//   const newStart = whiteKeys.value[idx].note
-//   const newEnd = whiteKeys.value[idx + highlightCount.value - 1].note
-//   console.log(`components/PianoKeyboard.vue - [Line: 244]| newStart: `, newStart)
-//   console.log(`components/PianoKeyboard.vue - [Line: 245]| newEnd: `, newEnd)
-//   activeRange.value = { start: newStart, end: newEnd }
-//   emit('update:activeRangeKeys', { start: newStart, end: newEnd })
-// }
-
 const keyboardRoot = ref<HTMLElement | null>(null)
 
-// 計算 activeRange.start 對應的白鍵在所有白鍵中的 index
 const activeStartWhiteKeyIdx = computed(() => {
   if (!activeRange.value)
     return 0
@@ -211,6 +196,26 @@ const emitUpdateActiveRangeKeys = debounce(
   200,
   { leading: false, trailing: true }
 )
+
+function onKeySetActiveRangeStart(note: string) {
+  if (!props.pressDisabled) return
+
+  const whiteNote = note.replace(/#/, '') // 去掉黑鍵的 # 符號
+  let startIdx = getWhiteKeyIndex(whiteNote)
+  const newEndIdx = startIdx + highlightCount.value - 1
+
+  // 如果 startIdx + highlightCount 超過白鍵數量，則將 startIdx 調整到最後一個白鍵
+  if (newEndIdx >= whiteKeys.value.length) {
+    startIdx = whiteKeys.value.length - highlightCount.value
+  }
+
+  const start = whiteKeys.value[startIdx].note
+  const end = newEndIdx < whiteKeys.value.length
+    ? whiteKeys.value[newEndIdx].note
+    : whiteKeys.value[whiteKeys.value.length - 1].note
+
+  emit('update:activeRangeKeys', { start, end })
+}
 
 const {
   onHighlightMouseDown,

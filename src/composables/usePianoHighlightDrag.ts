@@ -6,7 +6,7 @@ export function usePianoHighlightDrag(
   whiteKeys: Ref<PianoKey[]>,
   highlightCount: Ref<number>,
   currentWhiteKeyWidth: Ref<number>,
-  activeRange: WritableComputedRef<{ start: string, end: string } | null>,
+  activeRange: Ref<{ start: string, end: string } | null>,
   emitUpdateActiveRangeKeys: (range: { start: string, end: string }) => void,
   keyWidth: number
 ) {
