@@ -96,20 +96,6 @@ export function usePianoHighlightDrag(
     }
   })
 
-  onMounted(() => {
-    if ($elem.value) {
-      $elem.value.addEventListener('mousedown', onHighlightMouseDown)
-    }
-  })
-
-  onBeforeUnmount(() => {
-    if ($elem.value) {
-      $elem.value.removeEventListener('mousedown', onHighlightMouseDown)
-    }
-    document.removeEventListener('mousemove', onHighlightMouseMove)
-    document.removeEventListener('mouseup', onHighlightMouseUp)
-  })
-
   return {
     draggingRange,
     onHighlightMouseDown,
