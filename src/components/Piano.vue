@@ -199,8 +199,36 @@ const handleKeyMouseLeave = (note: string) => {
   }
 }
 
+function checkSWCacheStatusByMessage(): Promise<{ allCached: boolean, cachedCount: number, expectedCount: number }> {
+  return new Promise(resolve => {
+    if (!navigator.serviceWorker.controller) {
+      resolve({ allCached: false, cachedCount: 0, expectedCount: 0 })
+      return
+    }
+    // 設定回應監聽
+    navigator.serviceWorker.addEventListener('message', event => {
+      if (event.data && event.data.type === 'SW_CACHE_STATUS') {
+        resolve(event.data.payload)
+      }
+    }, { once: true })
+    // 發送訊息給 SW
+    navigator.serviceWorker.controller.postMessage({ type: 'CHECK_CACHE_STATUS' })
+  })
+}
+
+async function checkAudioHasCache() {
+  const allCached = await checkSWCacheStatusByMessage()
+
+  if (allCached) {
+    preloadAllAudio()
+  } else {
+    console.warn('Audio cache not fully loaded, preloading audio files...')
+    preloadAllAudio()
+  }
+}
+
 onMounted(() => {
-  preloadAllAudio()
+  checkAudioHasCache()
   document.addEventListener('keydown', handleKeyDown);
   document.addEventListener('keyup', handleKeyUp);
 
