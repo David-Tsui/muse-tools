@@ -18,9 +18,8 @@
         <input
           type="number"
           v-model.number="keyRangeCount"
-          min="1"
+          min="7"
           max="88"
-          readonly
           @change="onActiveRangeInputChange"
         />
       </label>
@@ -37,21 +36,34 @@
 <script setup lang="ts">
 import { keysAll } from '../constant/piano';
 
-const props = defineProps<{
-  activeRangeKeys: {
-    start: string;
-    end: string;
-  };
-}>();
+const props = withDefaults(
+  defineProps<{
+    activeRangeKeys: {
+      start: string;
+      end: string;
+    };
+    rangeCount?: number;
+  }>(),
+  {
+    rangeCount: 14
+  }
+);
 const emit = defineEmits<{
   (e: 'update:activeRangeKeys', value: { start: string; end: string }): void;
+  (e: 'update:rangeCount', value: number): void;
 }>();
 
-const keyRangeCount = ref(14)
 const activeRangeKeys = computed({
   get: () => props.activeRangeKeys,
   set: (value) => {
     emit('update:activeRangeKeys', value)
+  }
+})
+const keyRangeCount = computed({
+  get: () => props.rangeCount,
+  set: (value) => {
+    if (value < 7 || value > 88) return
+    emit('update:rangeCount', value)
   }
 })
 const inputStart = ref(activeRangeKeys.value.start)
@@ -62,15 +74,13 @@ watch(() => activeRangeKeys.value.start, (newStart) => {
 
 // 計算 inputEnd
 const inputEnd = computed(() => {
-  // 找到 start 在白鍵陣列中的 index，然後往後 keyCount-1
   const whiteKeys = keysAll.filter(k => k.type === 'white')
   const startIdx = whiteKeys.findIndex(k => k.note === inputStart.value)
   if (startIdx === -1) return ''
-  const endIdx = startIdx + keyRangeCount.value - 1
+  const endIdx = startIdx + props.rangeCount - 1
   if (endIdx >= whiteKeys.length) return whiteKeys[whiteKeys.length - 1].note
   return whiteKeys[endIdx].note
 })
-
 
 function onActiveRangeInputChange() {
   const noteRegex = /^[a-gA-G]{1}\d{1}$/
@@ -78,7 +88,7 @@ function onActiveRangeInputChange() {
   const startIdx = whiteKeys.findIndex(k => k.note === inputStart.value)
 
   if (noteRegex.test(inputStart.value) && startIdx !== -1) {
-    let endIdx = startIdx + keyRangeCount.value - 1
+    let endIdx = startIdx + props.rangeCount - 1
     if (endIdx >= whiteKeys.length) endIdx = whiteKeys.length - 1
     activeRangeKeys.value = {
       start: whiteKeys[startIdx].note,

@@ -66,9 +66,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed } from 'vue'
 import { keysAll, keysDimension } from '../constant/piano'
 import { debounce } from 'lodash-es'
+import { usePianoHighlightDrag } from '../composables/usePianoHighlightDrag'
 
 const props = defineProps<{
   keys: PianoKey[]
@@ -102,9 +103,11 @@ const highlightCount = ref(14)
 
 const whiteKeys = computed(() => props.keys.filter(k => k.type === 'white'))
 
-const activeRange = ref<{ start: string, end: string } | null>(props.activeRangeKeys ?? null)
-watch(() => props.activeRangeKeys, (val) => {
-  if (val) activeRange.value = { ...val }
+const activeRange  = computed({
+  get: () => props.activeRangeKeys || null,
+  set: (value) => {
+    emit('update:activeRangeKeys', value)
+  }
 })
 
 function getWhiteKeyIndex(note: string) {
@@ -161,86 +164,11 @@ const currentKeyboardWidth = computed(() => {
   if (!activeRange.value)
     return whiteKeys.value.length * currentWhiteKeyWidth.value + 'px'
 
-    console.log(`components/PianoKeyboard.vue - [Line: 164]| activeRange.value: `, activeRange.value)
   const startIdx = getWhiteKeyIndex(activeRange.value.start)
   const endIdx = getWhiteKeyIndex(activeRange.value.end)
   const count = endIdx - startIdx + 1
-  console.log('components/PianoKeyboard.vue - [Line: 167]| count: ', count)
   return `${count * currentWhiteKeyWidth.value}px`
 })
-
-const highlightStyle = computed(() => {
-  if (!activeRange.value) return {}
-
-  const startIdx = getWhiteKeyIndex(activeRange.value.start)
-  const pianoLeftPadding = keyboardRoot.value
-    ? parseFloat(getComputedStyle(keyboardRoot.value).paddingLeft)
-    : 0
-
-  return {
-    left: `${startIdx * currentWhiteKeyWidth.value + pianoLeftPadding}px`,
-    width: `${highlightCount.value * currentWhiteKeyWidth.value}px`
-  }
-})
-
-const leftShadowStyle = computed(() => {
-  if (!activeRange.value) return {}
-  const startIdx = getWhiteKeyIndex(activeRange.value.start)
-  const pianoLeftPadding = keyboardRoot.value
-    ? parseFloat(getComputedStyle(keyboardRoot.value).paddingLeft)
-    : 0
-
-  return {
-    left: 0,
-    width: `${startIdx * currentWhiteKeyWidth.value + pianoLeftPadding}px`
-  }
-})
-
-const rightShadowStyle = computed(() => {
-  if (!activeRange.value) return {}
-  const startIdx = getWhiteKeyIndex(activeRange.value.start)
-  const pianoLeftPadding = keyboardRoot.value
-    ? parseFloat(getComputedStyle(keyboardRoot.value).paddingLeft)
-    : 0
-  const whiteKeysCount = whiteKeys.value.length - startIdx - highlightCount.value
-
-  return {
-    left: `${(startIdx + highlightCount.value) * currentWhiteKeyWidth.value + pianoLeftPadding}px`,
-    width: `${whiteKeysCount * currentWhiteKeyWidth.value}px`
-  }
-})
-
-// 拖曳 highlight window
-let dragging = false
-let dragStartX = 0
-let dragStartIdx = 0
-
-function onHighlightMouseDown(e: MouseEvent) {
-  dragging = true
-  dragStartX = e.clientX
-  dragStartIdx = getWhiteKeyIndex(activeRange.value!.start)
-  document.addEventListener('mousemove', onHighlightMouseMove)
-  document.addEventListener('mouseup', onHighlightMouseUp)
-}
-
-function onHighlightMouseMove(e: MouseEvent) {
-  if (!dragging) return
-  const dx = e.clientX - dragStartX
-  const moveKeys = Math.round(dx / keyWidth)
-  let newStartIdx = dragStartIdx + moveKeys
-  newStartIdx = Math.max(0, Math.min(whiteKeys.value.length - highlightCount.value, newStartIdx))
-  const newStart = whiteKeys.value[newStartIdx].note
-  const newEnd = whiteKeys.value[newStartIdx + highlightCount.value - 1].note
-  console.log(`components/PianoKeyboard.vue - [Line: 223]| Range: `, newStart, newEnd)
-  activeRange.value = { start: newStart, end: newEnd }
-  emitUpdateActiveRangeKeys({ start: newStart, end: newEnd })
-}
-
-function onHighlightMouseUp() {
-  dragging = false
-  document.removeEventListener('mousemove', onHighlightMouseMove)
-  document.removeEventListener('mouseup', onHighlightMouseUp)
-}
 
 // 點擊陰影區域
 // function onShadowClick(side: 'left' | 'right', e: MouseEvent) {
@@ -260,65 +188,44 @@ function onHighlightMouseUp() {
 // }
 
 const keyboardRoot = ref<HTMLElement | null>(null)
-watch(
-  () => props.activeRangeKeys,
-  async (val, oldVal) => {
-    if (!val || !keyboardRoot.value) return
-    await nextTick()
-    // 找到 activeRange 的第一個白鍵 DOM
-    const firstKey = keyboardRoot.value.querySelector(`[data-note="${val.start}"]`)
-
-    if (firstKey && keyboardRoot.value) {
-      const keyRect = (firstKey as HTMLElement).getBoundingClientRect()
-      const containerRect = keyboardRoot.value.getBoundingClientRect()
-      // 若鍵盤已經 overflow，則自動 scroll
-      if (keyRect.left < containerRect.left || keyRect.right > containerRect.right) {
-        // 將該 key 滾動到可見區域
-        const scrollLeft = (firstKey as HTMLElement).offsetLeft - 40 // 40px padding
-        keyboardRoot.value.scrollTo({ left: scrollLeft, behavior: 'smooth' })
-      }
-    }
-  },
-  { immediate: false }
-)
-
-onMounted(() => {
-  // 初始化 activeRange
-  if (!activeRange.value && whiteKeys.value.length >= highlightCount.value) {
-    activeRange.value = {
-      start: whiteKeys.value[0].note,
-      end: whiteKeys.value[highlightCount.value - 1].note
-    }
-    emit('update:activeRangeKeys', { ...activeRange.value })
-  }
-})
-
-onBeforeUnmount(() => {
-  document.removeEventListener('mousemove', onHighlightMouseMove)
-  document.removeEventListener('mouseup', onHighlightMouseUp)
-})
 
 // 計算 activeRange.start 對應的白鍵在所有白鍵中的 index
 const activeStartWhiteKeyIdx = computed(() => {
-  if (!activeRange.value) return 0
+  if (!activeRange.value)
+    return 0
   return getWhiteKeyIndex(activeRange.value.start)
 })
 
 // 計算需要平移的 px 數
 const octaveTranslateX = computed(() => {
-  // 只在 mini/pressDisabled 模式下移動
-  if (props.pressDisabled) return 0
-
+  if (props.pressDisabled)
+    return 0
   return -(activeStartWhiteKeyIdx.value * currentWhiteKeyWidth.value) + 'px'
 })
 
-// 將 emit update:activeRangeKeys 包一層 debounce（leading/trailing 皆可控制）
+// 將 emit update:activeRangeKeys 包一層 debounce
 const emitUpdateActiveRangeKeys = debounce(
   (range: { start: string, end: string }) => {
     emit('update:activeRangeKeys', range)
   },
   200,
-  { leading: false, trailing: true } // 可依需求調整
+  { leading: false, trailing: true }
+)
+
+const {
+  onHighlightMouseDown,
+  highlightStyle,
+  leftShadowStyle,
+  rightShadowStyle,
+} = usePianoHighlightDrag(
+  keyboardRoot,
+  getWhiteKeyIndex,
+  whiteKeys,
+  highlightCount,
+  currentWhiteKeyWidth,
+  activeRange,
+  emitUpdateActiveRangeKeys,
+  keyWidth
 )
 </script>
 

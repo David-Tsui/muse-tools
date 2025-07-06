@@ -4,7 +4,10 @@
     <div class="piano-control-window">
       <PianoControlsWindow v-model="activeRangeKeys" />
     </div>
-    <PianoRangeInput v-model:activeRangeKeys="activeRangeKeys" />
+    <PianoRangeInput
+      v-model:active-range-keys="activeRangeKeys"
+      v-model:range-count="keyRangeCount"
+    />
     <PianoKeyboard
       :keys="keysAll"
       :activeNotes="activeNotes"
@@ -40,6 +43,7 @@ import { keysAll } from '../constant/piano'
 
 const activeNotes = ref<string[]>([]);
 const activeRangeKeys = ref<{ start: string, end: string }>({ start: 'C4', end: 'B5' });
+const keyRangeCount = ref(14)
 
 const volume = ref(0.5);
 const synth = shallowRef<Tone.PolySynth | null>(null);
