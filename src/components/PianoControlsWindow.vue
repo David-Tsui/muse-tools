@@ -3,6 +3,7 @@
     <PianoKeyboard
       v-model:activeRangeKeys="modelValue"
       :keys="keysAll"
+      :highlight-count="props.rangeCount"
       :press-disabled="true"
     />
   </div>
@@ -11,12 +12,18 @@
 <script setup lang="ts">
 import { keysAll } from '../constant/piano'
 
-const props = defineProps({
-  modelValue: {
-    type: Object as () => { start: string; end: string },
-    default: () => ({ start: 'C3', end: 'E5' })
+const props = withDefaults(
+  defineProps<{
+    modelValue: {
+      start: string
+      end: string
+    }
+    rangeCount?: number
+  }>(),
+  {
+    rangeCount: 14
   }
-})
+)
 
 const emit = defineEmits(['update:modelValue'])
 
@@ -28,7 +35,7 @@ const modelValue = computed({
 
 <style scoped>
 .piano-control-window {
-  width: 92vw;
+  width: fit-content;
   min-width: 600px;
   max-width: 932px;
   height: 160px;

@@ -18,8 +18,8 @@
         <input
           type="number"
           v-model.number="keyRangeCount"
-          min="7"
-          max="88"
+          min="15"
+          max="49"
           @change="onActiveRangeInputChange"
         />
       </label>

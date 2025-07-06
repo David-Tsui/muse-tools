@@ -1,22 +1,22 @@
-export const keysScaleRatio = 0.28;
+export const keysScaleRatio = 0.4;
 
 export const keysDimension = {
   white: {
-    width: 60,
-    height: 200,
+    width: 32,
+    height: 160,
     borderWidth: 2,
     mini: {
-      width: 60 * keysScaleRatio,
-      height: 200 * keysScaleRatio,
+      width: 32 * keysScaleRatio,
+      height: 160 * keysScaleRatio,
       borderWidth: 1,
     }
   },
   black: {
-    width: 38,
-    height: 120,
+    width: 18,
+    height: 95,
     mini: {
-      width: Math.ceil(38 * keysScaleRatio),
-      height: 120 * keysScaleRatio,
+      width: Math.ceil(18 * keysScaleRatio),
+      height: 95 * keysScaleRatio,
     }
   }
 } as const;
@@ -98,18 +98,18 @@ export const keysAll: PianoKey[] = [
   { note: 'A6', type: 'white', label: 'A' },
   { note: 'A#6', type: 'black', label: 'A#' },
   { note: 'B6', type: 'white', label: 'B' },
-  { note: 'C7', type: 'white', label: 'C7' },
-  { note: 'C#7', type: 'black', label: 'C#7' },
-  { note: 'D7', type: 'white', label: 'D7' },
-  { note: 'D#7', type: 'black', label: 'D#7' },
-  { note: 'E7', type: 'white', label: 'E7' },
-  { note: 'F7', type: 'white', label: 'F7' },
-  { note: 'F#7', type: "black", label:"F#7" },
-  { note: 'G7', type: 'white', label: 'G7' },
-  { note: 'G#7', type: 'black', label: 'G#7' },
-  { note: 'A7', type: 'white', label: 'A7' },
-  { note: 'A#7', type: 'black', label: 'A#7' },
-  { note: 'B7', type: 'white', label: 'B7' },
+  { note: 'C7', type: 'white', label: 'C' },
+  { note: 'C#7', type: 'black', label: 'C#' },
+  { note: 'D7', type: 'white', label: 'D' },
+  { note: 'D#7', type: 'black', label: 'D#' },
+  { note: 'E7', type: 'white', label: 'E' },
+  { note: 'F7', type: 'white', label: 'F' },
+  { note: 'F#7', type: 'black', label: 'F#' },
+  { note: 'G7', type: 'white', label: 'G' },
+  { note: 'G#7', type: 'black', label: 'G#' },
+  { note: 'A7', type: 'white', label: 'A' },
+  { note: 'A#7', type: 'black', label: 'A#' },
+  { note: 'B7', type: 'white', label: 'B' },
 ] satisfies PianoKey[];
 
 export const PIANO_AUDIO_SOURCES: Record<string, string> = {

@@ -7,7 +7,10 @@
       </template>
     </Spinner>
     <div class="piano-control-window">
-      <PianoControlsWindow v-model="activeRangeKeys" />
+      <PianoControlsWindow
+        v-model="activeRangeKeys"
+        :range-count="keyRangeCount"
+      />
     </div>
     <PianoRangeInput
       v-model:active-range-keys="activeRangeKeys"
@@ -46,8 +49,8 @@ import { keysAll, PIANO_AUDIO_SOURCES } from '../constant/piano'
 import Spinner from './Spinner.vue'
 
 const activeNotes = ref<string[]>([]);
-const activeRangeKeys = ref<{ start: string, end: string }>({ start: 'C4', end: 'B5' })
-const keyRangeCount = ref(14)
+const activeRangeKeys = ref<{ start: string, end: string }>({ start: 'C2', end: 'B7' })
+const keyRangeCount = ref(42)
 const volume = ref(0.5)
 const mouseDown = ref(false)
 const lastHoveredKey = ref<string | null>(null)
@@ -269,7 +272,7 @@ onBeforeUnmount(() => {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   backdrop-filter: blur(10px);
   border-radius: 20px;
-  padding: 40px;
+  padding: 2rem 0;
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }

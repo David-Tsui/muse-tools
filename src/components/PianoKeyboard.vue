@@ -70,12 +70,16 @@ import { debounce } from 'lodash-es'
 import { usePianoHighlightDrag } from '../composables/usePianoHighlightDrag'
 import PianoKey from './PianoKey.vue';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   keys: PianoKey[]
   activeNotes?: string[]
   activeRangeKeys?: { start: string, end: string }
+  highlightCount?: number // 用於高亮區域的鍵數量
   pressDisabled?: boolean // 是否禁用按鍵事件
-}>()
+}>(), {
+  highlightCount: 42,
+  pressDisabled: false
+})
 
 const emit = defineEmits([
   'key-mousedown', 'key-mouseenter', 'key-mouseup', 'key-mouseleave',
@@ -98,7 +102,6 @@ const whiteKeyHeight = computed(() => currentKeyDimension.value.white.height + '
 const whiteKeyBorderWidth = computed(() => currentKeyDimension.value.white.borderWidth + 'px')
 const blackKeyWidth = computed(() => currentKeyDimension.value.black.width + 'px')
 const blackKeyHeight = computed(() => currentKeyDimension.value.black.height + 'px')
-const highlightCount = ref(14)
 
 const whiteKeys = computed(() => props.keys.filter(k => k.type === 'white'))
 
@@ -201,11 +204,11 @@ function onKeySetActiveRangeStart(note: string) {
 
   const whiteNote = note.replace(/#/, '') // 去掉黑鍵的 # 符號
   let startIdx = getWhiteKeyIndex(whiteNote)
-  const newEndIdx = startIdx + highlightCount.value - 1
+  const newEndIdx = startIdx + props.highlightCount - 1
 
   // 如果 startIdx + highlightCount 超過白鍵數量，則將 startIdx 調整到最後一個白鍵
   if (newEndIdx >= whiteKeys.value.length) {
-    startIdx = whiteKeys.value.length - highlightCount.value
+    startIdx = whiteKeys.value.length - props.highlightCount
   }
 
   const start = whiteKeys.value[startIdx].note
@@ -225,7 +228,7 @@ const {
   keyboardRoot,
   getWhiteKeyIndex,
   whiteKeys,
-  highlightCount,
+  toRef(() => props.highlightCount),
   currentWhiteKeyWidth,
   activeRange,
   emitUpdateActiveRangeKeys,
