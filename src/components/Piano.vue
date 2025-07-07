@@ -83,17 +83,24 @@ const stopNote = (note: string) => {
   }
 }
 
+async function playNotesSequence(notes: string[], interval: number = 500) {
+  await notes.reduce(async (prev, note) => {
+    await prev
+    playNote(note)
+    await new Promise(res => setTimeout(res, interval))
+    stopNote(note)
+  }, Promise.resolve())
+
+  return
+}
+
 // Play a scale
-const playScale = async () => {
+const playScale = async (scaleNotes: string[]) => {
   try {
-    const scale = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5']
-    await scale.reduce((prev, note) => {
-      return prev.then(async () => {
-        playNote(note)
-        await new Promise(res => setTimeout(res, 150))
-        stopNote(note)
-      })
-    }, Promise.resolve())
+    await playNotesSequence(scaleNotes, 200)
+    const reverseNotes = [...scaleNotes].reverse()
+    reverseNotes.shift()
+    await playNotesSequence(reverseNotes, 200)
   } catch (error) {
     console.error('Error playing scale:', error)
   }
@@ -127,7 +134,7 @@ const keyMap: { [key: string]: string } = {
   'a': 'C4', 'w': 'C#4', 's': 'D4', 'e': 'D#4', 'd': 'E4',
   'f': 'F4', 't': 'F#4', 'g': 'G4', 'y': 'G#4', 'h': 'A4',
   'u': 'A#4', 'j': 'B4', 'k': 'C5', 'o': 'C#5', 'l': 'D5',
-  'p': 'D#5', ';': 'E5'
+  'p': 'D#5', ';': 'E5', '\'': 'F5',
 };
 
 const handleKeyDown = (event: KeyboardEvent) => {

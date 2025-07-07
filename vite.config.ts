@@ -1,3 +1,4 @@
+import UnoCSS from 'unocss/vite'
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import AutoImport from 'unplugin-auto-import/vite';
@@ -14,7 +15,8 @@ export default defineConfig({
     }),
     Components({
       dts: 'src/components.d.ts'
-    })
+    }),
+    UnoCSS()
   ],
   test: {
     globals: true,
