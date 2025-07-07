@@ -1,12 +1,15 @@
 <template>
   <div
     class="piano-key"
-    :class="[isWhite ? 'piano-key--white' : 'piano-key--black', { active: isActive }]"
+    :class="[
+      isWhite ? 'piano-key--white' : 'piano-key--black',
+      { 'active': isActive }
+    ]"
     :data-note="keyData.note"
-    @mousedown="handleMouseDown"
-    @mouseenter="handleMouseEnter"
-    @mouseup="handleMouseUp"
-    @mouseleave="handleMouseLeave"
+    @mousedown="emit('mousedown', keyData.note)"
+    @mouseup="emit('mouseup', keyData.note)"
+    @mouseenter="emit('mouseenter', keyData.note)"
+    @mouseleave="emit('mouseleave', keyData.note)"
   >
     <span class="piano-key__label">{{ keyData.label }}</span>
   </div>
@@ -21,28 +24,11 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'onMousedown', note: string): void
-  (e: 'onMouseenter', note: string): void
-  (e: 'onMouseup', note: string): void
-  (e: 'onMouseleave', note: string): void
+  (e: 'mousedown', note: string): void
+  (e: 'mouseenter', note: string): void
+  (e: 'mouseup', note: string): void
+  (e: 'mouseleave', note: string): void
 }>()
-
-function handleMouseDown(e: MouseEvent) {
-  emit('onMousedown', props.keyData.note)
-}
-
-function handleMouseEnter() {
-  if (!props.disabled)
-    emit('onMouseenter', props.keyData.note)
-}
-function handleMouseUp() {
-  if (!props.disabled)
-    emit('onMouseup', props.keyData.note)
-}
-function handleMouseLeave() {
-  if (!props.disabled)
-    emit('onMouseleave', props.keyData.note)
-}
 </script>
 
 <style lang="scss" scoped>
@@ -54,6 +40,15 @@ function handleMouseLeave() {
   border-width: var(--white-key-border-width);
   transition: all 0.1s ease;
   user-select: none;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+  }
+  &:active, &.active {
+    transform: translateY(3px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+  }
 }
 
 .piano-key--white {
@@ -64,11 +59,7 @@ function handleMouseLeave() {
   border-radius: 0 0 8px 8px;
   box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
 
-  // &:is(.mini *) {
-  //   border-radius: 0 0 4px 4px;
-  // }
-
-  &.active {
+  &.active, &:active {
     background: linear-gradient(to bottom, #e8e8e8 0%, #d0d0d0 100%);
   }
 }
@@ -86,11 +77,7 @@ function handleMouseLeave() {
   z-index: 2;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
 
-  // &:is(.mini *) {
-  //   border-radius: 0 0 3px 3px;
-  // }
-
-  &.active {
+  &.active, &:active {
     background: linear-gradient(to bottom, #1a252f 0%, #0f1419 100%);
   }
 }

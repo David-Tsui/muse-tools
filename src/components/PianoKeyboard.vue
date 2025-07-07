@@ -34,14 +34,17 @@
           v-for="(key, idx) in octave.white"
           :key="key.note"
           :keyData="key"
-          :isActive="Boolean(activeNotes?.includes(key.note))"
           is-white
+          :isActive="Boolean(activeNotes?.includes(key.note))"
           :disabled="Boolean(pressDisabled)"
           :style="{ gridColumn: idx + 1 }"
-          @on-mousedown="pressDisabled ? onKeySetActiveRangeStart(key.note) : onMouseDown(key.note)"
-          @on-mouseenter="!pressDisabled && onMouseEnter(key.note)"
-          @on-mouseup="!pressDisabled && onMouseUp(key.note)"
-          @on-mouseleave="!pressDisabled && onMouseLeave(key.note)"
+          @mousedown="pressDisabled ? onKeySetActiveRangeStart(key.note) : onMouseDown(key.note)"
+          @mouseenter="!pressDisabled && onMouseEnter(key.note)"
+          @mouseup="!pressDisabled && onMouseUp(key.note)"
+          @mouseleave="!pressDisabled && onMouseLeave(key.note)"
+          @touchstart="(e: TouchEvent) => onTouchStart(e, key.note)"
+          @touchend="(e: TouchEvent) => onTouchEnd(e, key.note)"
+          @touchmove="(e: TouchEvent) => onTouchMove(e, key.note)"
         />
       </div>
       <div class="piano-black-keys">
@@ -53,10 +56,13 @@
           :is-white="false"
           :disabled="Boolean(pressDisabled)"
           :style="{ gridColumn: getBlackKeyGridColumnInOctave(key.note), pointerEvents: pressDisabled ? 'auto' : undefined }"
-          @on-mousedown="pressDisabled ? onKeySetActiveRangeStart(key.note) : onMouseDown(key.note)"
-          @on-mouseenter="!pressDisabled && onMouseEnter(key.note)"
-          @on-mouseup="!pressDisabled && onMouseUp(key.note)"
-          @on-mouseleave="!pressDisabled && onMouseLeave(key.note)"
+          @mousedown="pressDisabled ? onKeySetActiveRangeStart(key.note) : onMouseDown(key.note)"
+          @mouseenter="!pressDisabled && onMouseEnter(key.note)"
+          @mouseup="!pressDisabled && onMouseUp(key.note)"
+          @mouseleave="!pressDisabled && onMouseLeave(key.note)"
+          @touchstart="(e: TouchEvent) => onTouchStart(e, key.note)"
+          @touchend="(e: TouchEvent) => onTouchEnd(e, key.note)"
+          @touchmove="(e: TouchEvent) => onTouchMove(e, key.note)"
         />
       </div>
     </div>
@@ -82,14 +88,51 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits([
-  'key-mousedown', 'key-mouseenter', 'key-mouseup', 'key-mouseleave',
+  'key-mousedown',
+  'key-mouseenter',
+  'key-mouseup',
+  'key-mouseleave',
   'update:activeRangeKeys'
 ])
 
+// 新增一個 ref 來追蹤 touch 移動時的上一個 note
+const lastTouchedNote = ref<string | null>(null)
+
+// 其餘事件維持不變
 function onMouseDown(note: string) { emit('key-mousedown', note) }
 function onMouseEnter(note: string) { emit('key-mouseenter', note) }
 function onMouseUp(note: string) { emit('key-mouseup', note) }
 function onMouseLeave(note: string) { emit('key-mouseleave', note) }
+
+function onTouchStart(e: TouchEvent, note: string) {
+  e.preventDefault()
+  emit('key-mousedown', note)
+}
+function onTouchEnd(e: TouchEvent, note: string) {
+  e.preventDefault()
+  emit('key-mouseup', lastTouchedNote.value || note)
+}
+
+function onTouchMove(e: TouchEvent, startNote: string) {
+  e.preventDefault()
+  if (props.pressDisabled) return
+
+  // 取得觸控點下的元素
+  const touch = e.touches[0]
+  if (!touch) return
+
+  const elem = document.elementFromPoint(touch.clientX, touch.clientY)
+
+  if (elem && elem instanceof HTMLElement && elem.dataset.note) {
+    const note = elem.dataset.note
+    if (note !== lastTouchedNote.value) {
+      lastTouchedNote.value = note
+      emit('key-mouseenter', note)
+    }
+  } else {
+    lastTouchedNote.value = null
+  }
+}
 
 const keyWidth = keysDimension.white.width
 const currentKeyDimension = computed(() => {
@@ -330,16 +373,5 @@ const {
   top: 0;
   left: 0;
   width: 100%;
-}
-
-.piano-key:is(:not(.mini *)) {
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
-  }
-  &:active {
-    transform: translateY(3px);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
-  }
 }
 </style>

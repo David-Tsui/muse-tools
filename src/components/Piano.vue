@@ -194,6 +194,7 @@ onBeforeUnmount(() => {
   padding: 2rem 0;
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
 }
 
 .piano-title {
