@@ -137,8 +137,6 @@ function onTouchMove(e: TouchEvent, startNote: string) {
 }
  const keyWidth = getCssVarPx(keyboardRoot.value, '--white-key-width', 36) + getCssVarPx(keyboardRoot.value, '--white-key-border-width', 2) * 2
 
-const whiteKeys = computed(() => props.keys.filter(k => k.type === 'white'))
-
 const activeRange  = ref<{ start: string, end: string } | null>(props.activeRangeKeys || null)
 
 watch(() => props.activeRangeKeys, (newRange) => {
@@ -148,6 +146,8 @@ watch(() => props.activeRangeKeys, (newRange) => {
     activeRange.value = null
   }
 }, {  deep: true })
+
+const whiteKeys = computed(() => props.keys.filter(k => k.type === 'white'))
 
 function getWhiteKeyIndex(note: string) {
   return whiteKeys.value.findIndex(k => k.note === note)
@@ -180,11 +180,9 @@ function splitKeysByOctave(keys: PianoKey[]) {
   return octaves
 }
 
-const octaves = computed(() => {
-  return splitKeysByOctave(keysAll)
-})
+const octaves = computed(() => splitKeysByOctave(keysAll))
 
-// 黑鍵在 octave 內的 grid column
+// 黑鍵在 octave 內的 grid column 定位
 function getBlackKeyGridColumnInOctave(note: PianoKey['note']) {
   const columnMap = {
     'C#': 7, 'D#': 12, 'F#': 26, 'G#': 31, 'A#': 36
@@ -203,7 +201,6 @@ const currentKeyboardWidth = computed(() => {
   const count = endIdx - startIdx + 1
   return `calc(${count * keyWidth}px)`
 })
-
 
 const activeStartWhiteKeyIdx = computed(() => {
   if (!activeRange.value)
@@ -254,7 +251,6 @@ const {
   rightShadowStyle,
 } = usePianoHighlightDrag(
   keyboardRoot,
-  getWhiteKeyIndex,
   whiteKeys,
   toRef(() => props.highlightCount),
   activeRange,

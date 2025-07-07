@@ -145,21 +145,24 @@ const handleKeyUp = (event: KeyboardEvent) => {
 };
 
 // Mouse event handlers for piano keys
-const handleKeyMouseDown = async (note: string) => {
+const handleKeyMouseDown = (note: string) => {
   mouseDown.value = true
   if (lastHoveredKey.value && lastHoveredKey.value !== note) {
     stopNote(lastHoveredKey.value)
   }
   lastHoveredKey.value = note
-  await playNote(note)
+  playNote(note)
 }
 
-const handleKeyMouseEnter = async (note: string) => {
-  if (mouseDown.value && lastHoveredKey.value !== note) {
-    if (lastHoveredKey.value) stopNote(lastHoveredKey.value)
-    lastHoveredKey.value = note
-    await playNote(note)
-  }
+const handleKeyMouseEnter = (note: string) => {
+  if (!(mouseDown.value && lastHoveredKey.value !== note))
+    return
+
+  if (lastHoveredKey.value)
+    stopNote(lastHoveredKey.value)
+
+  lastHoveredKey.value = note
+  playNote(note)
 }
 
 const handleKeyMouseUp = (note: string) => {

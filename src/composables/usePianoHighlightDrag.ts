@@ -3,7 +3,6 @@ import { getCssVarPx } from '../utils/dom'
 
 export function usePianoHighlightDrag(
   $elem: Ref<HTMLElement | null>,
-  getWhiteKeyIndex: (note: string) => number,
   whiteKeys: Ref<PianoKey[]>,
   highlightCount: Ref<number>,
   activeRange: Ref<{ start: string, end: string } | null>,
@@ -24,7 +23,7 @@ export function usePianoHighlightDrag(
   function onHighlightMouseDown(e: MouseEvent) {
     dragging = true
     dragStartX = e.clientX
-    dragStartIdx = getWhiteKeyIndex(activeRange.value!.start)
+    dragStartIdx = whiteKeys.value.findIndex(k => k.note === activeRange.value!.start)
     document.addEventListener('mousemove', onHighlightMouseMove)
     document.addEventListener('mouseup', onHighlightMouseUp)
   }
@@ -60,7 +59,8 @@ export function usePianoHighlightDrag(
     if (draggingRange.value) {
       startIdx = draggingRange.value.startIdx
     } else if (activeRange.value) {
-      startIdx = getWhiteKeyIndex(activeRange.value.start)
+      startIdx = whiteKeys.value.findIndex(k => k.note ===
+      activeRange.value?.start)
     } else {
       return {}
     }
@@ -78,7 +78,8 @@ export function usePianoHighlightDrag(
 
   const leftShadowStyle = computed(() => {
     if (!activeRange.value) return {}
-    const startIdx = getWhiteKeyIndex(activeRange.value.start)
+    const startIdx = whiteKeys.value.findIndex(k => k.note ===
+      activeRange.value?.start)
     const pianoLeftPadding = $elem.value
       ? parseFloat(getComputedStyle($elem.value).paddingLeft)
       : 0
@@ -92,7 +93,8 @@ export function usePianoHighlightDrag(
 
   const rightShadowStyle = computed(() => {
     if (!activeRange.value) return {}
-    const startIdx = getWhiteKeyIndex(activeRange.value.start)
+    const startIdx = whiteKeys.value.findIndex(k => k.note ===
+      activeRange.value?.start)
     const pianoLeftPadding = $elem.value
       ? parseFloat(getComputedStyle($elem.value).paddingLeft)
       : 0

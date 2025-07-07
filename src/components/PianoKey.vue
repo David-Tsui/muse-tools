@@ -42,11 +42,10 @@ const emit = defineEmits<{
   user-select: none;
 
   &:hover {
-    transform: translateY(-2px);
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
   }
-  &:active, &.active {
-    transform: translateY(3px);
+  &.active {
+    transform: translateY(1px);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
   }
 }
@@ -59,7 +58,7 @@ const emit = defineEmits<{
   border-radius: 0 0 8px 8px;
   box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
 
-  &.active, &:active {
+  &.active {
     background: linear-gradient(to bottom, #e8e8e8 0%, #d0d0d0 100%);
   }
 }
@@ -77,7 +76,7 @@ const emit = defineEmits<{
   z-index: 2;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
 
-  &.active, &:active {
+  &.active {
     background: linear-gradient(to bottom, #1a252f 0%, #0f1419 100%);
   }
 }
