@@ -3,7 +3,7 @@
     <h1 class="piano-title">🎹 Vue Piano</h1>
     <Spinner v-if="isAudioLoading">
       <template #loading-text>
-        Loading piano sounds... ({{ loadedCount }}/{{ totalToLoad }})
+        Loading piano sounds...
       </template>
     </Spinner>
     <div class="piano-control-window">
@@ -45,8 +45,9 @@
 import { ref, onMounted } from 'vue'
 import PianoKeyboard from './PianoKeyboard.vue'
 import PianoControlsPanel from './PianoControlsPanel.vue'
-import { keysAll, PIANO_AUDIO_SOURCES } from '../constant/piano'
+import { keysAll } from '../constant/piano'
 import Spinner from './Spinner.vue'
+import { useToneSampler } from '../composables/useToneSampler'
 
 const activeNotes = ref<string[]>([]);
 const activeRangeKeys = ref<{ start: string, end: string }>({ start: 'C2', end: 'B7' })
@@ -55,55 +56,27 @@ const volume = ref(0.5)
 const mouseDown = ref(false)
 const lastHoveredKey = ref<string | null>(null)
 
-const audioMap = new Map<string, HTMLAudioElement>()
 const isAudioLoading = ref(true)
-const loadedCount = ref(0)
-const totalToLoad = Object.values(PIANO_AUDIO_SOURCES).filter(Boolean).length
 
-function preloadAllAudio() {
-  loadedCount.value = 0
-  isAudioLoading.value = true
-  const promises: Promise<void>[] = []
-  Object.entries(PIANO_AUDIO_SOURCES).forEach(([note, src]) => {
-    if (src) {
-      const audio = new Audio(src)
-      audio.preload = 'auto'
-      audio.oncanplaythrough = () => {
-        loadedCount.value++
-        if (loadedCount.value >= totalToLoad) {
-          isAudioLoading.value = false
-        }
-      }
-      audio.onerror = () => {
-        loadedCount.value++
-        if (loadedCount.value >= totalToLoad) {
-          isAudioLoading.value = false
-        }
-      }
-      audioMap.set(note, audio)
-      // 強制觸發載入
-      promises.push(audio.load?.() ?? Promise.resolve())
-    }
-  })
-}
+const {
+  play: samplerPlay,
+  stop: samplerStop,
+  isAudioLoaded,
+} = useToneSampler()
+
+watch(isAudioLoaded, (loaded) => {
+  isAudioLoading.value = !loaded
+})
 
 const playNote = (note: string) => {
-  const audio = audioMap.get(note)
-  if (!audio) return
-  audio.currentTime = 0
-  audio.volume = volume.value
-  audio.play().catch(() => {})
-  if (!activeNotes.value.includes(note)) {
-    activeNotes.value.push(note)
-  }
+  samplerPlay(note)
+  if (activeNotes.value.includes(note))
+    return
+  activeNotes.value.push(note)
 }
 
 const stopNote = (note: string) => {
-  const audio = audioMap.get(note)
-  if (audio) {
-    audio.pause()
-    audio.currentTime = 0
-  }
+  samplerStop(note)
   const index = activeNotes.value.indexOf(note)
   if (index > -1) {
     activeNotes.value.splice(index, 1)
@@ -202,48 +175,19 @@ const handleKeyMouseLeave = (note: string) => {
   }
 }
 
-function checkSWCacheStatusByMessage(): Promise<{ allCached: boolean, cachedCount: number, expectedCount: number }> {
-  return new Promise(resolve => {
-    if (!navigator.serviceWorker.controller) {
-      resolve({ allCached: false, cachedCount: 0, expectedCount: 0 })
-      return
-    }
-    // 設定回應監聽
-    navigator.serviceWorker.addEventListener('message', event => {
-      if (event.data && event.data.type === 'SW_CACHE_STATUS') {
-        resolve(event.data.payload)
-      }
-    }, { once: true })
-    // 發送訊息給 SW
-    navigator.serviceWorker.controller.postMessage({ type: 'CHECK_CACHE_STATUS' })
-  })
-}
-
-async function checkAudioHasCache() {
-  const allCached = await checkSWCacheStatusByMessage()
-
-  if (allCached) {
-    preloadAllAudio()
-  } else {
-    console.warn('Audio cache not fully loaded, preloading audio files...')
-    preloadAllAudio()
-  }
-}
-
 onMounted(() => {
-  checkAudioHasCache()
   document.addEventListener('keydown', handleKeyDown);
   document.addEventListener('keyup', handleKeyUp);
 
   // Add data attributes for animation targeting
-  keysAll.forEach(key => {
-    setTimeout(() => {
-      const element = document.querySelector(`[data-note="${key.note}"]`);
-      if (element) {
-        element.setAttribute('data-note', key.note);
-      }
-    }, 100);
-  });
+  // keysAll.forEach(key => {
+  //   setTimeout(() => {
+  //     const element = document.querySelector(`[data-note="${key.note}"]`);
+  //     if (element) {
+  //       element.setAttribute('data-note', key.note);
+  //     }
+  //   }, 100);
+  // });
 
   document.addEventListener('mouseup', () => {
     mouseDown.value = false
