@@ -47,7 +47,7 @@ import PianoKeyboard from './PianoKeyboard.vue'
 import PianoControlsPanel from './PianoControlsPanel.vue'
 import { keysAll } from '../constant/piano'
 import Spinner from './Spinner.vue'
-import { useToneSampler } from '../composables/useToneSampler'
+import { useSmplr } from '../composables/useSmplr'
 
 const activeNotes = ref<string[]>([]);
 const activeRangeKeys = ref<{ start: string, end: string }>({ start: 'C2', end: 'B7' })
@@ -59,24 +59,24 @@ const lastHoveredKey = ref<string | null>(null)
 const isAudioLoading = ref(true)
 
 const {
-  play: samplerPlay,
-  stop: samplerStop,
+  play: smplrPlay,
+  stop: smplrStop,
   isAudioLoaded,
-} = useToneSampler()
+} = useSmplr()
 
 watch(isAudioLoaded, (loaded) => {
   isAudioLoading.value = !loaded
 })
 
 const playNote = (note: string) => {
-  samplerPlay(note)
+  smplrPlay(note)
   if (activeNotes.value.includes(note))
     return
   activeNotes.value.push(note)
 }
 
 const stopNote = (note: string) => {
-  samplerStop(note)
+  smplrStop()
   const index = activeNotes.value.indexOf(note)
   if (index > -1) {
     activeNotes.value.splice(index, 1)
@@ -178,36 +178,11 @@ const handleKeyMouseLeave = (note: string) => {
 onMounted(() => {
   document.addEventListener('keydown', handleKeyDown);
   document.addEventListener('keyup', handleKeyUp);
-
-  // Add data attributes for animation targeting
-  // keysAll.forEach(key => {
-  //   setTimeout(() => {
-  //     const element = document.querySelector(`[data-note="${key.note}"]`);
-  //     if (element) {
-  //       element.setAttribute('data-note', key.note);
-  //     }
-  //   }, 100);
-  // });
-
-  document.addEventListener('mouseup', () => {
-    mouseDown.value = false
-    if (lastHoveredKey.value) {
-      stopNote(lastHoveredKey.value)
-      lastHoveredKey.value = null
-    }
-  })
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', handleKeyDown);
   document.removeEventListener('keyup', handleKeyUp);
-  document.removeEventListener('mouseup', () => {
-    mouseDown.value = false
-    if (lastHoveredKey.value) {
-      stopNote(lastHoveredKey.value)
-      lastHoveredKey.value = null
-    }
-  })
 })
 </script>
 

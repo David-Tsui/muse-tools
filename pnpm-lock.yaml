@@ -14,6 +14,9 @@ importers:
       lodash-es:
         specifier: ^4.17.21
         version: 4.17.21
+      smplr:
+        specifier: ^0.16.3
+        version: 0.16.3
       tonal:
         specifier: ^5.2.1
         version: 5.2.1
@@ -1384,6 +1387,10 @@ packages:
   signal-exit@4.1.0:
     resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==}
     engines: {node: '>=14'}
+
+  smplr@0.16.3:
+    resolution: {integrity: sha512-rKXh2SzzvCH454mHwECOHg4/lstZssnvxRXi0bAfHpmorrmr579irA5tU85b8icMblWqqdfTtZHVYdk1GU8MRQ==}
+    engines: {node: '>=14.0.0'}
 
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
@@ -2956,6 +2963,8 @@ snapshots:
   siginfo@2.0.0: {}
 
   signal-exit@4.1.0: {}
+
+  smplr@0.16.3: {}
 
   source-map-js@1.2.1: {}
 
