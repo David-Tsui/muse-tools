@@ -71,10 +71,11 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { keysAll, keysDimension } from '../constant/piano'
+import { keysAll } from '../constant/piano'
 import { debounce } from 'lodash-es'
 import { usePianoHighlightDrag } from '../composables/usePianoHighlightDrag'
 import PianoKey from './PianoKey.vue';
+import { getCssVarPx } from '../utils/dom';
 
 const props = withDefaults(defineProps<{
   keys: PianoKey[]
@@ -95,6 +96,7 @@ const emit = defineEmits([
   'update:activeRangeKeys'
 ])
 
+const keyboardRoot = ref<HTMLElement | null>(null)
 // 新增一個 ref 來追蹤 touch 移動時的上一個 note
 const lastTouchedNote = ref<string | null>(null)
 
@@ -133,18 +135,7 @@ function onTouchMove(e: TouchEvent, startNote: string) {
     lastTouchedNote.value = null
   }
 }
-
-const keyWidth = keysDimension.white.width
-const currentKeyDimension = computed(() => {
-  return props.pressDisabled
-    ? { white: keysDimension.white.mini, black: keysDimension.black.mini }
-    : { white: keysDimension.white, black: keysDimension.black }
-})
-const whiteKeyWidth = computed(() => currentKeyDimension.value.white.width + 'px')
-const whiteKeyHeight = computed(() => currentKeyDimension.value.white.height + 'px')
-const whiteKeyBorderWidth = computed(() => currentKeyDimension.value.white.borderWidth + 'px')
-const blackKeyWidth = computed(() => currentKeyDimension.value.black.width + 'px')
-const blackKeyHeight = computed(() => currentKeyDimension.value.black.height + 'px')
+ const keyWidth = getCssVarPx(keyboardRoot.value, '--white-key-width', 36) + getCssVarPx(keyboardRoot.value, '--white-key-border-width', 2) * 2
 
 const whiteKeys = computed(() => props.keys.filter(k => k.type === 'white'))
 
@@ -203,22 +194,16 @@ function getBlackKeyGridColumnInOctave(note: PianoKey['note']) {
   return columnMap[key] || 1
 }
 
-const currentWhiteKeyWidth = computed(() => {
-  const { width, borderWidth } = currentKeyDimension.value.white
-  return width + borderWidth * 2
-})
-
 const currentKeyboardWidth = computed(() => {
   if (!activeRange.value)
-    return whiteKeys.value.length * currentWhiteKeyWidth.value + 'px'
+    return `calc(${whiteKeys.value.length} * ${keyWidth})`
 
   const startIdx = getWhiteKeyIndex(activeRange.value.start)
   const endIdx = getWhiteKeyIndex(activeRange.value.end)
   const count = endIdx - startIdx + 1
-  return `${count * currentWhiteKeyWidth.value}px`
+  return `calc(${count * keyWidth}px)`
 })
 
-const keyboardRoot = ref<HTMLElement | null>(null)
 
 const activeStartWhiteKeyIdx = computed(() => {
   if (!activeRange.value)
@@ -230,7 +215,7 @@ const activeStartWhiteKeyIdx = computed(() => {
 const octaveTranslateX = computed(() => {
   if (props.pressDisabled)
     return 0
-  return -(activeStartWhiteKeyIdx.value * currentWhiteKeyWidth.value) + 'px'
+  return -(activeStartWhiteKeyIdx.value * keyWidth) + 'px'
 })
 
 // 將 emit update:activeRangeKeys 包一層 debounce
@@ -272,20 +257,18 @@ const {
   getWhiteKeyIndex,
   whiteKeys,
   toRef(() => props.highlightCount),
-  currentWhiteKeyWidth,
   activeRange,
   emitUpdateActiveRangeKeys,
-  keyWidth
 )
 </script>
 
 <style lang="scss" scoped>
 .piano-keyboard {
-  --white-key-width: v-bind(whiteKeyWidth);
-  --white-key-height: v-bind(whiteKeyHeight);
-  --white-key-border-width: v-bind(whiteKeyBorderWidth);
-  --black-key-width: v-bind(blackKeyWidth);
-  --black-key-height: v-bind(blackKeyHeight);
+  --white-key-width: 36px;
+  --white-key-height: 160px;
+  --white-key-border-width: 2px;
+  --black-key-width: 20px;
+  --black-key-height: 95px;
   --white-key-label-color: #2c3e50;
   --black-key-label-color: #ecf0f1;
   --keyboard-translate-x: v-bind(octaveTranslateX);
@@ -302,13 +285,15 @@ const {
   padding: 10px 6px;
   border-radius: 10px;
   box-shadow: inset 0 5px 15px rgba(0, 0, 0, 0.3);
-
-  &.mini {
-    width: unset;
-  }
 }
 
 .piano-keyboard.mini {
+  --scale-ratio: 0.4;
+  --white-key-width: 14.4px; /* 36px * 0.4 */
+  --white-key-height: 64px; /* 160px * 0.4 */
+  --black-key-width: 8px; /* 20px * 0.4 */
+  --black-key-height: 38px; /* 95px * 0.4 */
+
   width: unset;
 
   .piano-key--white {
@@ -319,6 +304,13 @@ const {
   }
   .piano-key__label {
     font-size: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .piano-keyboard:not(.mini) {
+    --white-key-width: 48px;
+    --black-key-width: 28px;
   }
 }
 

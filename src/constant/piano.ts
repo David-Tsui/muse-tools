@@ -1,26 +1,3 @@
-export const keysScaleRatio = 0.4;
-
-export const keysDimension = {
-  white: {
-    width: 32,
-    height: 160,
-    borderWidth: 2,
-    mini: {
-      width: 32 * keysScaleRatio,
-      height: 160 * keysScaleRatio,
-      borderWidth: 1,
-    }
-  },
-  black: {
-    width: 18,
-    height: 95,
-    mini: {
-      width: Math.ceil(18 * keysScaleRatio),
-      height: 95 * keysScaleRatio,
-    }
-  }
-} as const;
-
 // from A0 to B7
 export const keysAll: PianoKey[] = [
   // { note: 'A0', type: 'white', label: 'A' },

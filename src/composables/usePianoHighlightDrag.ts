@@ -1,15 +1,20 @@
 import { ref, computed, type Ref } from 'vue'
+import { getCssVarPx } from '../utils/dom'
 
 export function usePianoHighlightDrag(
   $elem: Ref<HTMLElement | null>,
   getWhiteKeyIndex: (note: string) => number,
   whiteKeys: Ref<PianoKey[]>,
   highlightCount: Ref<number>,
-  currentWhiteKeyWidth: Ref<number>,
   activeRange: Ref<{ start: string, end: string } | null>,
   emitUpdateActiveRangeKeys: (range: { start: string, end: string }) => void,
-  keyWidth: number
 ) {
+  const keyWidth = ref(0)
+
+  onMounted(() => {
+    keyWidth.value = getCssVarPx($elem.value, '--white-key-width', 36) + getCssVarPx($elem.value, '--white-key-border-width', 2) * 2
+  })
+
   let dragging = false
   let dragStartX = 0
   let dragStartIdx = 0
@@ -27,7 +32,7 @@ export function usePianoHighlightDrag(
   function onHighlightMouseMove(e: MouseEvent) {
     if (!dragging) return
     const dx = e.clientX - dragStartX
-    const moveKeys = Math.round(dx / keyWidth)
+    const moveKeys = Math.round(dx / keyWidth.value)
     let newStartIdx = dragStartIdx + moveKeys
     newStartIdx = Math.max(0, Math.min(whiteKeys.value.length - highlightCount.value, newStartIdx))
     draggingRange.value = {
@@ -62,10 +67,12 @@ export function usePianoHighlightDrag(
     const pianoLeftPadding = $elem.value
       ? parseFloat(getComputedStyle($elem.value).paddingLeft)
       : 0
+    const left = `calc(${startIdx} * ${keyWidth.value}px + ${pianoLeftPadding}px)`
+    const width = `calc(${highlightCount.value} * ${keyWidth.value}px)`
 
     return {
-      left: `${startIdx * currentWhiteKeyWidth.value + pianoLeftPadding}px`,
-      width: `${highlightCount.value * currentWhiteKeyWidth.value}px`
+      left,
+      width,
     }
   })
 
@@ -75,10 +82,11 @@ export function usePianoHighlightDrag(
     const pianoLeftPadding = $elem.value
       ? parseFloat(getComputedStyle($elem.value).paddingLeft)
       : 0
+    const width = `calc(${startIdx} * ${keyWidth.value}px + ${pianoLeftPadding}px)`
 
     return {
       left: 0,
-      width: `${startIdx * currentWhiteKeyWidth.value + pianoLeftPadding}px`
+      width,
     }
   })
 
@@ -89,10 +97,12 @@ export function usePianoHighlightDrag(
       ? parseFloat(getComputedStyle($elem.value).paddingLeft)
       : 0
     const whiteKeysCount = whiteKeys.value.length - startIdx - highlightCount.value
+    const left = `calc(${startIdx} * ${keyWidth.value}px + ${pianoLeftPadding}px + ${highlightCount.value} * ${keyWidth.value}px)`
+    const width = `calc(${whiteKeysCount} * ${keyWidth.value}px)`
 
     return {
-      left: `${(startIdx + highlightCount.value) * currentWhiteKeyWidth.value + pianoLeftPadding}px`,
-      width: `${whiteKeysCount * currentWhiteKeyWidth.value}px`
+      left,
+      width,
     }
   })
 

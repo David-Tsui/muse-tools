@@ -1,4 +1,4 @@
-import { memoize, memoize2, measureExecutionTime } from './index'
+import { memoize, measureExecutionTime } from './index'
 import { describe, expect, it, vi } from 'vitest'
 
 describe('memoize', () => {
@@ -9,7 +9,7 @@ describe('memoize', () => {
     })
     const [level, expected] = [42, 267914296]
 
-    const memoizedFn = memoize2(mockFn)
+    const memoizedFn = memoize(mockFn)
     const { time: timeWithoutMemoize } = measureExecutionTime(memoizedFn, level)
     console.log('utils/index.test.ts - [Line: 12]| timeWithoutMemoize: ', `${timeWithoutMemoize}ms`)
     const { time: timeWithMemoize } = measureExecutionTime(memoizedFn, level)
