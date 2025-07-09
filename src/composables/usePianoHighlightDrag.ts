@@ -14,26 +14,28 @@ export function usePianoHighlightDrag(
     keyWidth.value = getCssVarPx($elem.value, '--white-key-width', 36) + getCssVarPx($elem.value, '--white-key-border-width', 2) * 2
   })
 
-  let dragging = false
-  let dragStartX = 0
-  let dragStartIdx = 0
+  const dragging = ref(false)
+  const dragStartX = ref(0)
+  const dragStartIdx = ref(0)
 
   const draggingRange = ref<{ startIdx: number, endIdx: number } | null>(null)
 
-  function onHighlightMouseDown(e: MouseEvent) {
-    dragging = true
-    dragStartX = e.clientX
-    dragStartIdx = whiteKeys.value.findIndex(k => k.note === activeRange.value!.start)
+  function onHighlightMouseDown(e: { clientX: number }) {
+    dragging.value = true
+    dragStartX.value = e.clientX
+    dragStartIdx.value = whiteKeys.value.findIndex(k => k.note === activeRange.value!.start)
     document.addEventListener('mousemove', onHighlightMouseMove)
     document.addEventListener('mouseup', onHighlightMouseUp)
   }
 
-  function onHighlightMouseMove(e: MouseEvent) {
-    if (!dragging) return
-    const dx = e.clientX - dragStartX
+  function onHighlightMouseMove(e: { clientX: number } ) {
+    if (!dragging.value) return
+
+    const dx = e.clientX - dragStartX.value
     const moveKeys = Math.round(dx / keyWidth.value)
-    let newStartIdx = dragStartIdx + moveKeys
+    let newStartIdx = dragStartIdx.value + moveKeys
     newStartIdx = Math.max(0, Math.min(whiteKeys.value.length - highlightCount.value, newStartIdx))
+
     draggingRange.value = {
       startIdx: newStartIdx,
       endIdx: newStartIdx + highlightCount.value - 1
@@ -41,7 +43,7 @@ export function usePianoHighlightDrag(
   }
 
   function onHighlightMouseUp() {
-    dragging = false
+    dragging.value = false
     document.removeEventListener('mousemove', onHighlightMouseMove)
     document.removeEventListener('mouseup', onHighlightMouseUp)
 
@@ -52,6 +54,16 @@ export function usePianoHighlightDrag(
       emitUpdateActiveRangeKeys({ start: newStart, end: newEnd })
       draggingRange.value = null
     }
+  }
+
+  function onHighlightTouchMove(e: TouchEvent) {
+    if (!dragging.value) return
+    if (e.touches.length > 0) {
+      onHighlightMouseMove(e.touches[0])
+    }
+  }
+  function onHighlightTouchEnd(e: TouchEvent) {
+    onHighlightMouseUp()
   }
 
   const highlightStyle = computed(() => {
@@ -109,8 +121,11 @@ export function usePianoHighlightDrag(
   })
 
   return {
+    dragging,
     draggingRange,
     onHighlightMouseDown,
+    onHighlightTouchMove,
+    onHighlightTouchEnd,
     highlightStyle,
     leftShadowStyle,
     rightShadowStyle

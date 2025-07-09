@@ -6,16 +6,17 @@
         Loading piano sounds...
       </template>
     </Spinner>
+
+    <PianoRangeInput
+      v-model:active-range-keys="activeRangeKeys"
+      v-model:range-count="activeRangeKeysCount"
+    />
     <div class="piano-control-window">
       <PianoControlsWindow
         v-model="activeRangeKeys"
         :range-count="activeRangeKeysCount"
       />
     </div>
-    <PianoRangeInput
-      v-model:active-range-keys="activeRangeKeys"
-      v-model:range-count="activeRangeKeysCount"
-    />
     <PianoKeyboard
       :keys="keysAll"
       :activeNotes="activeNotes"
@@ -60,8 +61,8 @@ provide<Ref<KeyLabelDisplayMode>>('displayMode', displayMode)
 
 function getInitialWhiteKeyCount() {
   const width = window.innerWidth
-  if (width < 500) return 8    // 手機
-  if (width < 900) return 14   // 平板
+  if (width < 500) return 7    // 手機
+  if (width < 900) return 15   // 平板
   if (width < 1600) return 29  // 小型桌機
   return 42                    // 桌機
 }

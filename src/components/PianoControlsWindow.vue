@@ -35,10 +35,9 @@ const modelValue = computed({
 
 <style scoped>
 .piano-control-window {
-  width: fit-content;
-  min-width: 600px;
-  max-width: 932px;
-  height: 160px;
   margin: 0 auto;
+  padding: 1rem 0;
+  width: fit-content;
+  max-width: 932px;
 }
 </style>

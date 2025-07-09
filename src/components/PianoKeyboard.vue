@@ -10,6 +10,9 @@
       class="highlight-window"
       :style="highlightStyle"
       @mousedown.stop="onHighlightMouseDown"
+      @touchstart.stop.prevent="onHighlightTouchStart"
+      @touchmove.stop.prevent="onHighlightTouchMove"
+      @touchend.stop.prevent="onHighlightTouchEnd"
     ></div>
     <!-- Shadow overlays -->
     <div
@@ -100,6 +103,7 @@ const emit = defineEmits([
 ])
 
 const keyboardRoot = ref<HTMLElement | null>(null)
+const currentKeyWidth = ref(0)
 // 新增一個 ref 來追蹤 touch 移動時的上一個 note
 const lastTouchedNote = ref<string | null>(null)
 
@@ -111,6 +115,7 @@ function onMouseLeave(note: string) { emit('key-mouseleave', note) }
 
 function onTouchStart(e: TouchEvent, note: string) {
   e.preventDefault()
+  onKeySetActiveRangeStart(note) // 如果是 miniMap，則設定高亮區域的起始鍵
   emit('key-mousedown', note)
 }
 function onTouchEnd(e: TouchEvent, note: string) {
@@ -138,7 +143,6 @@ function onTouchMove(e: TouchEvent, startNote: string) {
     lastTouchedNote.value = null
   }
 }
- const keyWidth = getCssVarPx(keyboardRoot.value, '--white-key-width', 36) + getCssVarPx(keyboardRoot.value, '--white-key-border-width', 2) * 2
 
 const activeRange  = ref<{ start: string, end: string } | null>(props.activeRangeKeys || null)
 
@@ -197,12 +201,12 @@ function getBlackKeyGridColumnInOctave(note: PianoKey['note']) {
 
 const currentKeyboardWidth = computed(() => {
   if (!activeRange.value)
-    return `calc(${whiteKeys.value.length} * ${keyWidth})`
+    return `calc(${whiteKeys.value.length} * ${currentKeyWidth.value})`
 
   const startIdx = getWhiteKeyIndex(activeRange.value.start)
   const endIdx = getWhiteKeyIndex(activeRange.value.end)
   const count = endIdx - startIdx + 1
-  return `calc(${count * keyWidth}px)`
+  return `calc(${count * currentKeyWidth.value}px)`
 })
 
 const activeStartWhiteKeyIdx = computed(() => {
@@ -215,7 +219,7 @@ const activeStartWhiteKeyIdx = computed(() => {
 const octaveTranslateX = computed(() => {
   if (props.miniMap)
     return 0
-  return -(activeStartWhiteKeyIdx.value * keyWidth) + 'px'
+  return -(activeStartWhiteKeyIdx.value * currentKeyWidth.value) + 'px'
 })
 
 // 將 emit update:activeRangeKeys 包一層 debounce
@@ -248,7 +252,10 @@ function onKeySetActiveRangeStart(note: string) {
 }
 
 const {
+  dragging: isDragging,
   onHighlightMouseDown,
+  onHighlightTouchMove,
+  onHighlightTouchEnd,
   highlightStyle,
   leftShadowStyle,
   rightShadowStyle,
@@ -259,6 +266,16 @@ const {
   activeRange,
   emitUpdateActiveRangeKeys,
 )
+
+function onHighlightTouchStart(e: TouchEvent) {
+  if (!props.miniMap) return
+  isDragging.value = true
+  // 取第一個觸點
+  const touch = e.touches[0]
+  if (touch) {
+    onHighlightMouseDown({ clientX: touch.clientX })
+  }
+}
 
 const { getSimplifiedNote } = useTonal()
 
@@ -273,6 +290,13 @@ function isNoteActive(key: PianoKey): boolean {
     )
   })
 }
+
+onMounted(() => {
+  if (keyboardRoot.value) {
+    currentKeyWidth.value = getCssVarPx(keyboardRoot.value, '--white-key-width', 36) +
+      getCssVarPx(keyboardRoot.value, '--white-key-border-width', 2) * 2
+  }
+})
 </script>
 
 <style lang="scss" scoped>
@@ -298,6 +322,13 @@ function isNoteActive(key: PianoKey): boolean {
   padding: 10px 6px;
   border-radius: 10px;
   box-shadow: inset 0 5px 15px rgba(0, 0, 0, 0.3);
+
+  @media (max-width: 768px) {
+    &:not(.piano-keyboard--minimap) {
+      --white-key-width: 48px;
+      --black-key-width: 28px;
+    }
+  }
 }
 
 .piano-keyboard.piano-keyboard--minimap {
@@ -307,7 +338,7 @@ function isNoteActive(key: PianoKey): boolean {
   --black-key-width: 5.6px; /* 20px * 0.28 */
   --black-key-height: 26.6px; /* 95px * 0.28 */
 
-  width: unset;
+  width: fit-content;
 
   .piano-key--white {
     border-radius: 0 0 4px 4px;
@@ -318,12 +349,14 @@ function isNoteActive(key: PianoKey): boolean {
   .piano-key__label {
     font-size: 10px;
   }
-}
 
-@media (max-width: 768px) {
-  .piano-keyboard:not(.piano-keyboard--minimap) {
-    --white-key-width: 48px;
-    --black-key-width: 28px;
+  @media (max-width: 768px) {
+    --scale-ratio: 0.15;
+    --white-key-width: 5.4px; /* 36px * 0.15 */
+    --white-key-height: 24px; /* 160px * 0.15 */
+    --black-key-width: 3px; /* 20px * 0.15 */
+    --black-key-height: 14.25px; /* 95px * 0.15 */
+    --white-key-border-width: 1px;
   }
 }
 
