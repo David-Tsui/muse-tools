@@ -33,7 +33,8 @@
       </div>
     </div>
     <PianoControlsPanel
-      :volume="volume"
+      v-model:volume="volume"
+      v-model:displayMode="displayMode"
       @play-scale="playScale"
       @play-chord="playChord"
       @stop-all="stopAll"
@@ -45,7 +46,7 @@
 import { ref, onMounted } from 'vue'
 import PianoKeyboard from './PianoKeyboard.vue'
 import PianoControlsPanel from './PianoControlsPanel.vue'
-import { keysAll } from '../constant/piano'
+import { KeyLabelDisplayMode, keysAll } from '../constant/piano'
 import Spinner from './Spinner.vue'
 import { useSmplr } from '../composables/useSmplr'
 
@@ -53,6 +54,10 @@ const activeNotes = ref<string[]>([])
 const activeRangeKeysCount = ref(getInitialWhiteKeyCount())
 const activeRangeKeys = ref<{ start: string, end: string }>( getActiveRangeKeys('C2', activeRangeKeysCount.value))
 const volume = ref(0.5)
+const displayMode = ref<KeyLabelDisplayMode>(KeyLabelDisplayMode.NAME)
+
+provide<Ref<KeyLabelDisplayMode>>('displayMode', displayMode)
+
 function getInitialWhiteKeyCount() {
   const width = window.innerWidth
   if (width < 500) return 8    // 手機

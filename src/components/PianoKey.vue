@@ -16,6 +16,8 @@
 </template>
 
 <script setup lang="ts">
+import { KeyLabelDisplayMode, noteMapToSingingName } from '../constant/piano'
+
 const props = defineProps<{
   keyData: PianoKey
   isActive: boolean
@@ -29,6 +31,25 @@ const emit = defineEmits<{
   (e: 'mouseup', note: string): void
   (e: 'mouseleave', note: string): void
 }>()
+
+const displayMode = inject<Ref<KeyLabelDisplayMode>>('displayMode')
+
+const displayLabel = computed(() => {
+  const key = props.keyData
+
+  switch (displayMode?.value) {
+    case KeyLabelDisplayMode.NONE:
+      return ''
+    case KeyLabelDisplayMode.NAME:
+      return key.label
+    case KeyLabelDisplayMode.NAME_WITH_OCTAVE:
+      return key.note
+    case KeyLabelDisplayMode.SINGING_NAME:
+      return noteMapToSingingName[key.label] || ''
+    default:
+      return props.keyData.label
+  }
+})
 </script>
 
 <style lang="scss" scoped>

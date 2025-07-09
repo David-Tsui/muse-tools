@@ -33,9 +33,9 @@
         <PianoKey
           v-for="(key, idx) in octave.white"
           :key="key.note"
-          :keyData="key"
+          :key-data="key"
           is-white
-          :isActive="isNoteActive(key)"
+          :is-active="isNoteActive(key)"
           :disabled="Boolean(miniMap)"
           :style="{ gridColumn: idx + 1 }"
           @mousedown="miniMap ? onKeySetActiveRangeStart(key.note) : onMouseDown(key.note)"
@@ -51,9 +51,9 @@
         <PianoKey
           v-for="(key) in octave.black"
           :key="key.note"
-          :keyData="key"
-          :isActive="isNoteActive(key)"
+          :key-data="key"
           :is-white="false"
+          :is-active="isNoteActive(key)"
           :disabled="Boolean(miniMap)"
           :style="{ gridColumn: getBlackKeyGridColumnInOctave(key.note), pointerEvents: miniMap ? 'auto' : undefined }"
           @mousedown="miniMap ? onKeySetActiveRangeStart(key.note) : onMouseDown(key.note)"

@@ -1,6 +1,9 @@
 <template>
   <div>
     <div class="controls">
+      <button class="control-button" @click="nextDisplayMode">
+        Display: {{ keyLabelDisplayModes.get(props.displayMode) }}
+      </button>
       <Popover class="relative">
         <PopoverButton class="control-button">Play Scale</PopoverButton>
         <PopoverPanel
@@ -32,7 +35,7 @@
         step="0.1"
         :value="volume"
         class="volume-slider"
-        @input="$emit('update-volume', Number(($event.target as HTMLInputElement).value))"
+        @input="$emit('update:volume', Number(($event.target as HTMLInputElement).value))"
       >
       <span style="color: white; font-weight: bold;">{{ Math.round(volume * 100) }}%</span>
     </div>
@@ -40,20 +43,34 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
-import ScalesCardsPanel from './ScalesCardsPanel.vue';
+import ScalesCardsPanel from './ScalesCardsPanel.vue'
+import { KeyLabelDisplayMode, keyLabelDisplayModes } from '../constant/piano'
 
-defineProps<{ volume: number }>()
+const props = defineProps<{
+  volume: number
+  displayMode: KeyLabelDisplayMode
+}>()
 
 const emit = defineEmits<{
   (e: 'play-scale', scaleNotes: string[]): void
   (e: 'play-chord'): void
   (e: 'stop-all'): void
-  (e: 'update-volume', volume: number): void
+  (e: 'update:volume', volume: number): void
+  (e: 'update:displayMode', mode: KeyLabelDisplayMode): void
 }>()
 
 function onSelectScale(_scale: PianoScale, scaleNotes: string[]) {
-  emit('play-scale',  scaleNotes);
+  emit('play-scale', scaleNotes)
+}
+
+const displayModes = Array.from(keyLabelDisplayModes.keys())
+const currentIdx = computed(() => displayModes.indexOf(props.displayMode))
+
+function nextDisplayMode() {
+  const idx = (currentIdx.value + 1) % displayModes.length
+  emit('update:displayMode', displayModes[idx])
 }
 </script>
 

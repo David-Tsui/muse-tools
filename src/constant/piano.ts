@@ -1,17 +1,17 @@
-export enum keysLabelDisplayMode {
+export enum KeyLabelDisplayMode {
   NONE = 'none',
-  ALL = 'all',
-  WHITE_ONLY = 'white-only',
-  BLACK_ONLY = 'black-only',
-  NUMERIC = 'numeric',
+  NAME = 'name',
+  NAME_WITH_OCTAVE = 'name_with_octave',
+  SINGING_NAME = 'singing_name',
+  // NUMERIC = 'numeric',
 }
 
-export type PianoKey = {
-  note: string
-  type: 'white' | 'black'
-  label: string
-  enharmonic?: string
-}
+export const keyLabelDisplayModes = new Map<KeyLabelDisplayMode, string>([
+  [KeyLabelDisplayMode.NONE, 'None'],
+  [KeyLabelDisplayMode.NAME, 'Name'],
+  [KeyLabelDisplayMode.NAME_WITH_OCTAVE, 'Name with Octave'],
+  [KeyLabelDisplayMode.SINGING_NAME, 'Singing Name'],
+])
 
 // from A0 to B7
 export const keysAll: PianoKey[] = [
@@ -100,6 +100,16 @@ export const keysAll: PianoKey[] = [
   { note: 'A#7', type: 'black', label: 'A#', enharmonic: 'Bb7' },
   { note: 'B7', type: 'white', label: 'B' },
 ] satisfies PianoKey[];
+
+export const noteMapToSingingName: Record<string, string> = {
+  'C': 'Do',
+  'D': 'Re',
+  'E': 'Mi',
+  'F': 'Fa',
+  'G': 'Sol',
+  'A': 'La',
+  'B': 'Si',
+}
 
 export const scalePairs: Array<{ [key in Tonality]: PianoScale }> = [
   {
