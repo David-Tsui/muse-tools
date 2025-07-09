@@ -11,7 +11,7 @@
     @mouseenter="emit('mouseenter', keyData.note)"
     @mouseleave="emit('mouseleave', keyData.note)"
   >
-    <span class="piano-key__label">{{ keyData.label }}</span>
+    <span class="piano-key__label">{{ hideLabel ? '' : displayLabel }}</span>
   </div>
 </template>
 
@@ -23,6 +23,7 @@ const props = defineProps<{
   isActive: boolean
   isWhite: boolean
   disabled: boolean
+  hideLabel?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -111,7 +112,7 @@ const displayLabel = computed(() => {
   font-weight: bold;
   pointer-events: none;
 
-  &:is(.mini *) {
+  &:is(.piano-keyboard--minimap *) {
     font-size: 10px;
   }
 

@@ -2,7 +2,7 @@
   <div
     ref="keyboardRoot"
     class="piano-keyboard"
-    :class="{ 'minimap': miniMap }"
+    :class="{ 'piano-keyboard--minimap': miniMap }"
   >
     <!-- Highlight window -->
     <div
@@ -37,6 +37,7 @@
           is-white
           :is-active="isNoteActive(key)"
           :disabled="Boolean(miniMap)"
+          :hide-label="miniMap"
           :style="{ gridColumn: idx + 1 }"
           @mousedown="miniMap ? onKeySetActiveRangeStart(key.note) : onMouseDown(key.note)"
           @mouseenter="!miniMap && onMouseEnter(key.note)"
@@ -55,6 +56,7 @@
           :is-white="false"
           :is-active="isNoteActive(key)"
           :disabled="Boolean(miniMap)"
+          :hide-label="miniMap"
           :style="{ gridColumn: getBlackKeyGridColumnInOctave(key.note), pointerEvents: miniMap ? 'auto' : undefined }"
           @mousedown="miniMap ? onKeySetActiveRangeStart(key.note) : onMouseDown(key.note)"
           @mouseenter="!miniMap && onMouseEnter(key.note)"
@@ -298,12 +300,12 @@ function isNoteActive(key: PianoKey): boolean {
   box-shadow: inset 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
-.piano-keyboard.minimap {
-  --scale-ratio: 0.4;
-  --white-key-width: 14.4px; /* 36px * 0.4 */
-  --white-key-height: 64px; /* 160px * 0.4 */
-  --black-key-width: 8px; /* 20px * 0.4 */
-  --black-key-height: 38px; /* 95px * 0.4 */
+.piano-keyboard.piano-keyboard--minimap {
+  --scale-ratio: 0.28;
+  --white-key-width: 10.08px; /* 36px * 0.28 */
+  --white-key-height: 44.8px; /* 160px * 0.28 */
+  --black-key-width: 5.6px; /* 20px * 0.28 */
+  --black-key-height: 26.6px; /* 95px * 0.28 */
 
   width: unset;
 
@@ -319,7 +321,7 @@ function isNoteActive(key: PianoKey): boolean {
 }
 
 @media (max-width: 768px) {
-  .piano-keyboard:not(.mini) {
+  .piano-keyboard:not(.piano-keyboard--minimap) {
     --white-key-width: 48px;
     --black-key-width: 28px;
   }
