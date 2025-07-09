@@ -9,12 +9,12 @@
     <div class="piano-control-window">
       <PianoControlsWindow
         v-model="activeRangeKeys"
-        :range-count="keyRangeCount"
+        :range-count="activeRangeKeysCount"
       />
     </div>
     <PianoRangeInput
       v-model:active-range-keys="activeRangeKeys"
-      v-model:range-count="keyRangeCount"
+      v-model:range-count="activeRangeKeysCount"
     />
     <PianoKeyboard
       :keys="keysAll"
@@ -49,10 +49,28 @@ import { keysAll } from '../constant/piano'
 import Spinner from './Spinner.vue'
 import { useSmplr } from '../composables/useSmplr'
 
-const activeNotes = ref<string[]>([]);
-const activeRangeKeys = ref<{ start: string, end: string }>({ start: 'C2', end: 'B7' })
-const keyRangeCount = ref(42)
+const activeNotes = ref<string[]>([])
+const activeRangeKeysCount = ref(getInitialWhiteKeyCount())
+const activeRangeKeys = ref<{ start: string, end: string }>( getActiveRangeKeys('C2', activeRangeKeysCount.value))
 const volume = ref(0.5)
+function getInitialWhiteKeyCount() {
+  const width = window.innerWidth
+  if (width < 500) return 8    // 手機
+  if (width < 900) return 14   // 平板
+  if (width < 1600) return 29  // 小型桌機
+  return 42                    // 桌機
+}
+
+function getActiveRangeKeys(start: string, count: number) {
+  const whiteKeys = keysAll.filter(k => k.type === 'white')
+  const startIdx = whiteKeys.findIndex(k => k.note === start)
+  const endIdx = Math.min(whiteKeys.length - 1, startIdx + count - 1)
+  return {
+    start: whiteKeys[startIdx]?.note ?? whiteKeys[0].note,
+    end: whiteKeys[endIdx]?.note ?? whiteKeys[whiteKeys.length - 1].note,
+  }
+}
+
 const mouseDown = ref(false)
 const lastHoveredKey = ref<string | null>(null)
 
@@ -185,14 +203,21 @@ const handleKeyMouseLeave = (note: string) => {
   }
 }
 
+function resetActiveRange() {
+  activeRangeKeysCount.value = getInitialWhiteKeyCount()
+  activeRangeKeys.value = getActiveRangeKeys('C2', activeRangeKeysCount.value)
+}
+
 onMounted(() => {
   document.addEventListener('keydown', handleKeyDown);
   document.addEventListener('keyup', handleKeyUp);
+  window.addEventListener('resize', resetActiveRange)
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', handleKeyDown);
   document.removeEventListener('keyup', handleKeyUp);
+  window.removeEventListener('resize', resetActiveRange)
 })
 </script>
 
