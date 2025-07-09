@@ -2,23 +2,23 @@
   <div
     ref="keyboardRoot"
     class="piano-keyboard"
-    :class="{ mini: pressDisabled }"
+    :class="{ 'minimap': miniMap }"
   >
     <!-- Highlight window -->
     <div
-      v-if="activeRange && pressDisabled"
+      v-if="activeRange && miniMap"
       class="highlight-window"
       :style="highlightStyle"
       @mousedown.stop="onHighlightMouseDown"
     ></div>
     <!-- Shadow overlays -->
     <div
-      v-if="activeRange && pressDisabled"
+      v-if="activeRange && miniMap"
       class="shadow-overlay left"
       :style="leftShadowStyle"
     ></div>
     <div
-      v-if="activeRange && pressDisabled"
+      v-if="activeRange && miniMap"
       class="shadow-overlay right"
       :style="rightShadowStyle"
     ></div>
@@ -36,12 +36,12 @@
           :keyData="key"
           is-white
           :isActive="isNoteActive(key)"
-          :disabled="Boolean(pressDisabled)"
+          :disabled="Boolean(miniMap)"
           :style="{ gridColumn: idx + 1 }"
-          @mousedown="pressDisabled ? onKeySetActiveRangeStart(key.note) : onMouseDown(key.note)"
-          @mouseenter="!pressDisabled && onMouseEnter(key.note)"
-          @mouseup="!pressDisabled && onMouseUp(key.note)"
-          @mouseleave="!pressDisabled && onMouseLeave(key.note)"
+          @mousedown="miniMap ? onKeySetActiveRangeStart(key.note) : onMouseDown(key.note)"
+          @mouseenter="!miniMap && onMouseEnter(key.note)"
+          @mouseup="!miniMap && onMouseUp(key.note)"
+          @mouseleave="!miniMap && onMouseLeave(key.note)"
           @touchstart="(e: TouchEvent) => onTouchStart(e, key.note)"
           @touchend="(e: TouchEvent) => onTouchEnd(e, key.note)"
           @touchmove="(e: TouchEvent) => onTouchMove(e, key.note)"
@@ -54,12 +54,12 @@
           :keyData="key"
           :isActive="isNoteActive(key)"
           :is-white="false"
-          :disabled="Boolean(pressDisabled)"
-          :style="{ gridColumn: getBlackKeyGridColumnInOctave(key.note), pointerEvents: pressDisabled ? 'auto' : undefined }"
-          @mousedown="pressDisabled ? onKeySetActiveRangeStart(key.note) : onMouseDown(key.note)"
-          @mouseenter="!pressDisabled && onMouseEnter(key.note)"
-          @mouseup="!pressDisabled && onMouseUp(key.note)"
-          @mouseleave="!pressDisabled && onMouseLeave(key.note)"
+          :disabled="Boolean(miniMap)"
+          :style="{ gridColumn: getBlackKeyGridColumnInOctave(key.note), pointerEvents: miniMap ? 'auto' : undefined }"
+          @mousedown="miniMap ? onKeySetActiveRangeStart(key.note) : onMouseDown(key.note)"
+          @mouseenter="!miniMap && onMouseEnter(key.note)"
+          @mouseup="!miniMap && onMouseUp(key.note)"
+          @mouseleave="!miniMap && onMouseLeave(key.note)"
           @touchstart="(e: TouchEvent) => onTouchStart(e, key.note)"
           @touchend="(e: TouchEvent) => onTouchEnd(e, key.note)"
           @touchmove="(e: TouchEvent) => onTouchMove(e, key.note)"
@@ -83,10 +83,10 @@ const props = withDefaults(defineProps<{
   activeNotes?: string[]
   activeRangeKeys?: { start: string, end: string }
   highlightCount?: number // 用於高亮區域的鍵數量
-  pressDisabled?: boolean // 是否禁用按鍵事件
+  miniMap?: boolean // 是否為小型鍵盤視圖
 }>(), {
   highlightCount: 42,
-  pressDisabled: false
+  miniMap: false
 })
 
 const emit = defineEmits([
@@ -118,7 +118,7 @@ function onTouchEnd(e: TouchEvent, note: string) {
 
 function onTouchMove(e: TouchEvent, startNote: string) {
   e.preventDefault()
-  if (props.pressDisabled) return
+  if (props.miniMap) return
 
   // 取得觸控點下的元素
   const touch = e.touches[0]
@@ -211,7 +211,7 @@ const activeStartWhiteKeyIdx = computed(() => {
 
 // 計算需要平移的 px 數
 const octaveTranslateX = computed(() => {
-  if (props.pressDisabled)
+  if (props.miniMap)
     return 0
   return -(activeStartWhiteKeyIdx.value * keyWidth) + 'px'
 })
@@ -226,7 +226,7 @@ const emitUpdateActiveRangeKeys = debounce(
 )
 
 function onKeySetActiveRangeStart(note: string) {
-  if (!props.pressDisabled) return
+  if (!props.miniMap) return
 
   const whiteNote = note.replace(/#/, '') // 去掉黑鍵的 # 符號
   let startIdx = getWhiteKeyIndex(whiteNote)
@@ -298,7 +298,7 @@ function isNoteActive(key: PianoKey): boolean {
   box-shadow: inset 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
-.piano-keyboard.mini {
+.piano-keyboard.minimap {
   --scale-ratio: 0.4;
   --white-key-width: 14.4px; /* 36px * 0.4 */
   --white-key-height: 64px; /* 160px * 0.4 */

@@ -4,7 +4,7 @@
       v-model:activeRangeKeys="modelValue"
       :keys="keysAll"
       :highlight-count="props.rangeCount"
-      :press-disabled="true"
+      mini-map
     />
   </div>
 </template>
