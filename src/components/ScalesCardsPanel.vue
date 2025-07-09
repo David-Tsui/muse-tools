@@ -30,14 +30,14 @@ const emit = defineEmits<{
   (e: 'select', scale: PianoScale, notes: string[]): void
 }>()
 
-const { getPerfectScaleNotes } = useTonal()
+const { getScaleNotes } = useTonal()
 
 const selectedScale = ref<PianoScale | null>(null)
 
 const selectScale = (scale: PianoScale) => {
   selectedScale.value = scale
 
-  const scaleNotes = getPerfectScaleNotes(scale.name.toLowerCase(), {
+  const scaleNotes = getScaleNotes(scale.name.toLowerCase(), {
     start: scale.start,
     end: scale.end,
   })

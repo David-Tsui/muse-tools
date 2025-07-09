@@ -77,7 +77,7 @@ const emit = defineEmits<{
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
 
   &.active {
-    background: linear-gradient(to bottom, #1a252f 0%, #0f1419 100%);
+    background: linear-gradient(to bottom, #245f95 0%, #0b2641 100%);
   }
 }
 

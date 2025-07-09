@@ -35,7 +35,7 @@
           :key="key.note"
           :keyData="key"
           is-white
-          :isActive="Boolean(activeNotes?.includes(key.note))"
+          :isActive="isNoteActive(key)"
           :disabled="Boolean(pressDisabled)"
           :style="{ gridColumn: idx + 1 }"
           @mousedown="pressDisabled ? onKeySetActiveRangeStart(key.note) : onMouseDown(key.note)"
@@ -52,7 +52,7 @@
           v-for="(key) in octave.black"
           :key="key.note"
           :keyData="key"
-          :isActive="Boolean(activeNotes?.includes(key.note))"
+          :isActive="isNoteActive(key)"
           :is-white="false"
           :disabled="Boolean(pressDisabled)"
           :style="{ gridColumn: getBlackKeyGridColumnInOctave(key.note), pointerEvents: pressDisabled ? 'auto' : undefined }"
@@ -74,8 +74,9 @@ import { ref, computed } from 'vue'
 import { keysAll } from '../constant/piano'
 import { debounce } from 'lodash-es'
 import { usePianoHighlightDrag } from '../composables/usePianoHighlightDrag'
-import PianoKey from './PianoKey.vue';
-import { getCssVarPx } from '../utils/dom';
+import PianoKey from './PianoKey.vue'
+import { getCssVarPx } from '../utils/dom'
+import { useTonal } from '../composables/useTonal'
 
 const props = withDefaults(defineProps<{
   keys: PianoKey[]
@@ -256,6 +257,20 @@ const {
   activeRange,
   emitUpdateActiveRangeKeys,
 )
+
+const { getSimplifiedNote } = useTonal()
+
+function isNoteActive(key: PianoKey): boolean {
+  if (!props.activeNotes)
+    return false
+
+  return props.activeNotes.some(note => {
+    return (
+      note === key.enharmonic ||
+      getSimplifiedNote(note) === key.note
+    )
+  })
+}
 </script>
 
 <style lang="scss" scoped>
