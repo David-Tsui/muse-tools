@@ -1,11 +1,11 @@
 <template>
   <div>
     <div class="controls">
-      <button class="control-button" @click="nextDisplayMode">
+      <button class="btn" @click="nextDisplayMode">
         Display: {{ keyLabelDisplayModes.get(props.displayMode) }}
       </button>
       <Popover class="relative">
-        <PopoverButton class="control-button">Play Scale</PopoverButton>
+        <PopoverButton class="btn">Play Scale</PopoverButton>
         <PopoverPanel
           class="absolute bottom-0 z-10 w-fit overflow-auto before:(content-empty absolute inset-0 bg-#2c3e50/90 p-5 rd-15px backdrop-blur-md z--1)"
           v-slot="{ close }"
@@ -15,7 +15,7 @@
             close()
           }" />
           <button
-            class="control-button mb-4"
+            class="btn mb-4"
             @click="close()"
             aria-label="Close"
           >
@@ -23,8 +23,8 @@
           </button>
         </PopoverPanel>
       </Popover>
-      <button class="control-button" @click="$emit('play-chord')">Play Chord</button>
-      <button class="control-button" @click="$emit('stop-all')">Stop All</button>
+      <button class="btn" @click="$emit('play-chord')">Play Chord</button>
+      <button class="btn" @click="$emit('stop-all')">Stop All</button>
     </div>
     <div class="volume-control">
       <label style="color: white; font-weight: bold;">Volume: </label>
@@ -82,24 +82,6 @@ function nextDisplayMode() {
   gap: 12px;
   text-align: center;
   margin-top: 20px;
-}
-
-::v-deep(.control-button) {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 10px 20px;
-  border-radius: 25px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
-  backdrop-filter: blur(5px);
-  transition: all 0.3s ease;
-}
-
-.control-button:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
 }
 
 .volume-control {

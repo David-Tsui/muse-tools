@@ -1,36 +1,31 @@
 <template>
-  <!-- activeRangeKeys 控制 input：只輸入 start，key count 可調整，end 自動計算且 readonly -->
-    <div
-      class="active-range-inputs"
-      style="margin-bottom: 16px;
-      text-align: center;"
-    >
-      <label>
-        Start:
-        <input
-          v-model="inputStart"
-          @change="onActiveRangeInputChange"
-          maxlength="3"
-        />
-      </label>
-      <label>
-        Key count:
-        <input
-          type="number"
-          v-model.number="keyRangeCount"
-          min="15"
-          max="49"
-          @change="onActiveRangeInputChange"
-        />
-      </label>
-      <label>
-        End:
-        <input
-          :value="inputEnd"
-          readonly
-        />
-      </label>
-    </div>
+  <div class="active-range-inputs">
+    <label>
+      Start:
+      <input
+        v-model="inputStart"
+        @change="onActiveRangeInputChange"
+        maxlength="3"
+      />
+    </label>
+    <label>
+      Key count:
+      <input
+        type="number"
+        v-model.number="keyRangeCount"
+        min="15"
+        max="49"
+        @change="onActiveRangeInputChange"
+      />
+    </label>
+    <label>
+      End:
+      <input
+        :value="inputEnd"
+        readonly
+      />
+    </label>
+  </div>
 </template>
 
 <script setup lang="ts">

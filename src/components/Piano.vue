@@ -7,10 +7,15 @@
       </template>
     </Spinner>
 
-    <PianoRangeInput
-      v-model:active-range-keys="activeRangeKeys"
-      v-model:range-count="activeRangeKeysCount"
-    />
+    <div class="piano-range-control flex-center gap-3">
+      <PianoRangeInput
+        v-model:active-range-keys="activeRangeKeys"
+        v-model:range-count="activeRangeKeysCount"
+      />
+      <button @click="resetActiveRange" class="btn btn--small">
+        Reset
+      </button>
+    </div>
     <div class="piano-control-window">
       <PianoControlsWindow
         v-model="activeRangeKeys"
@@ -217,13 +222,11 @@ function resetActiveRange() {
 onMounted(() => {
   document.addEventListener('keydown', handleKeyDown);
   document.addEventListener('keyup', handleKeyUp);
-  window.addEventListener('resize', resetActiveRange)
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', handleKeyDown);
   document.removeEventListener('keyup', handleKeyUp);
-  window.removeEventListener('resize', resetActiveRange)
 })
 </script>
 
@@ -235,7 +238,6 @@ onBeforeUnmount(() => {
   padding: 2rem 0;
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  overflow: hidden;
 }
 
 .piano-title {
