@@ -55,6 +55,7 @@ import PianoControlsPanel from './PianoControlsPanel.vue'
 import { KeyLabelDisplayMode, keysAll } from '../constant/piano'
 import Spinner from './Spinner.vue'
 import { useSmplr } from '../composables/useSmplr'
+import { useAbortController } from '@/composables/useAbortController'
 
 const activeNotes = ref<string[]>([])
 const activeRangeKeysCount = ref(getInitialWhiteKeyCount())
@@ -84,12 +85,11 @@ function getActiveRangeKeys(start: string, count: number) {
 
 const mouseDown = ref(false)
 const lastHoveredKey = ref<string | null>(null)
-
 const isAudioLoading = ref(true)
-
 const {
   play: smplrPlay,
   stop: smplrStop,
+  stopAll: smplrStopAll,
   isAudioLoaded,
 } = useSmplr()
 
@@ -97,39 +97,51 @@ watch(isAudioLoaded, (loaded) => {
   isAudioLoading.value = !loaded
 })
 
-const playNote = (note: string) => {
+function playNote(note: string) {
   smplrPlay(note)
-  if (activeNotes.value.includes(note))
-    return
-  activeNotes.value.push(note)
+
+  if (!activeNotes.value.includes(note))
+    activeNotes.value.push(note)
 }
 
 const stopNote = (note: string) => {
-  smplrStop()
+  smplrStop(note)
+
   const index = activeNotes.value.indexOf(note)
   if (index > -1) {
     activeNotes.value.splice(index, 1)
   }
 }
 
-async function playNotesSequence(notes: string[], interval: number = 500) {
+const scaleAbort = useAbortController()
+
+async function playNotesSequence(
+  notes: string[],
+  interval: number = 500,
+  signal?: AbortSignal
+) {
+  if (signal?.aborted) return
+
   await notes.reduce(async (prev, note) => {
     await prev
+    if (signal?.aborted) return
     playNote(note)
     await new Promise(res => setTimeout(res, interval))
     stopNote(note)
   }, Promise.resolve())
-
-  return
 }
 
-// Play a scale
 const playScale = async (scaleNotes: string[]) => {
+  stopAll()
+  scaleAbort.resetAbort()
+  const signal = scaleAbort.getSignal()
+
   try {
-    await playNotesSequence(scaleNotes, 200)
+    await playNotesSequence(scaleNotes, 200, signal)
+    if (signal.aborted) return
     const reverseNotes = [...scaleNotes].reverse()
     reverseNotes.shift()
-    await playNotesSequence(reverseNotes, 200)
+    await playNotesSequence(reverseNotes, 200, signal)
   } catch (error) {
     console.error('Error playing scale:', error)
   }
@@ -141,9 +153,7 @@ const playChord = async () => {
     const chord = ['C4', 'E4', 'G4', 'C5']
     chord.forEach(note => {
       playNote(note)
-      setTimeout(() => {
-        stopNote(note)
-      }, 1500)
+      setTimeout(() => { stopNote(note) }, 1500)
     })
   } catch (error) {
     console.error('Error playing chord:', error)
@@ -151,10 +161,9 @@ const playChord = async () => {
 }
 
 // Stop all notes
-const stopAll = () => {
-  activeNotes.value.forEach(note => {
-    stopNote(note)
-  })
+function stopAll() {
+  smplrStopAll()
+  scaleAbort.abort()
   activeNotes.value = []
 }
 
