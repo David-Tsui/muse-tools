@@ -55,7 +55,8 @@ import PianoControlsPanel from './PianoControlsPanel.vue'
 import { KeyLabelDisplayMode, keysAll } from '../constant/piano'
 import Spinner from './Spinner.vue'
 import { useSmplr } from '../composables/useSmplr'
-import { useAbortController } from '@/composables/useAbortController'
+import type { PromiseQueueTaskSignal } from '@/composables/usePromiseQueue'
+import { usePromiseQueue } from '@/composables/usePromiseQueue'
 
 const activeNotes = ref<string[]>([])
 const activeRangeKeysCount = ref(getInitialWhiteKeyCount())
@@ -113,12 +114,12 @@ const stopNote = (note: string) => {
   }
 }
 
-const scaleAbort = useAbortController()
+const promiseQueue = usePromiseQueue()
 
 async function playNotesSequence(
   notes: string[],
   interval: number = 500,
-  signal?: AbortSignal
+  signal?: PromiseQueueTaskSignal
 ) {
   if (signal?.aborted) return
 
@@ -133,15 +134,15 @@ async function playNotesSequence(
 
 const playScale = async (scaleNotes: string[]) => {
   stopAll()
-  scaleAbort.resetAbort()
-  const signal = scaleAbort.getSignal()
 
   try {
-    await playNotesSequence(scaleNotes, 200, signal)
-    if (signal.aborted) return
-    const reverseNotes = [...scaleNotes].reverse()
-    reverseNotes.shift()
-    await playNotesSequence(reverseNotes, 200, signal)
+    promiseQueue.enqueue((signal) => playNotesSequence(scaleNotes, 200, signal))
+    promiseQueue.enqueue(async (signal) => {
+      const reverseNotes = [...scaleNotes].reverse()
+      reverseNotes.shift()
+      await playNotesSequence(reverseNotes, 200, signal)
+    })
+    promiseQueue.run()
   } catch (error) {
     console.error('Error playing scale:', error)
   }
@@ -163,7 +164,8 @@ const playChord = async () => {
 // Stop all notes
 function stopAll() {
   smplrStopAll()
-  scaleAbort.abort()
+  // scaleAbort.abort()
+  promiseQueue.clear()
   activeNotes.value = []
 }
 
