@@ -1,136 +1,157 @@
 <template>
-  <div class="player">
-    <h2>1. Chord lookup player</h2>
-    <!-- 新增 Chord 查詢輸入框 -->
-    <div class="chord-lookup">
-      <input
-        v-model="chordInput"
-        type="text"
-        placeholder="Enter chord (e.g., Cmaj7)"
-        @input="lookupChord"
-      />
-      <p v-if="chordNotes">Notes: {{ chordNotesForDisplay }}</p>
-    </div>
-    <!-- 新增 rootOctave 控制項 -->
-    <div class="note-octave-control">
-      <p>Tonic position:</p>
-      <div class="octave-options">
-        <label
-          v-for="option in rootOctaveOptions"
-          :key="option.value"
-        >
-          <input
-            type="radio"
-            v-model="rootOctave"
-            :value="option.value"
-          />
-          {{ option.label }}
-        </label>
+  <div class="chord-lookup-player">
+    <h2>♬ Chord lookup player</h2>
+
+    <div class="container md:w-1/2 lg:w-1/3 mx-auto">
+      <!-- 新增 Chord 查詢輸入框 -->
+      <div class="chord-lookup flex flex-col">
+        <input
+          v-model="chordInput"
+          type="text"
+          placeholder="Enter chord (e.g., Cmaj7)"
+          @input="lookupChord"
+          class="w-[-webkit-fill-available]"
+        />
+        <p v-show="chordNotes">Notes: {{ chordNotesForDisplay }}</p>
+        <!-- 新增 rootOctave 控制項 -->
+        <div class="note-octave-control flex items-center">
+          <p>Tonic position:</p>
+          <div class="octave-options">
+            <label
+              v-for="option in rootOctaveOptions"
+              :key="option.value"
+              :disabled="chordNotes && chordNotes.length === 0"
+            >
+              <input
+                type="radio"
+                v-model="rootOctave"
+                :value="option.value"
+              />
+              {{ option.label }}
+            </label>
+          </div>
+        </div>
+        <div
+          v-show="chordNotes && chordNotes.length === 0" id="paper"
+        />
       </div>
-    </div>
-    <div id="paper"></div>
 
-    <!-- 新增進階和弦推薦 -->
-    <div class="chord-recommendations" v-if="advancedChords.length">
-      <p>Advanced Chords (based on <mark>{{ chordInput }}</mark>):</p>
-      <ul>
-        <li
-          v-for="chord in advancedChords"
-          :key="chord"
-          @click="replaceChordInput(chord)"
-          class="clickable-chord"
+      <!-- 新增 audioBpm 控制項 -->
+      <div
+        v-show="chordInput && chordNotes && chordNotes.length > 0"
+        class="audio-bpm-control flex gap-6"
+      >
+        <button @click="togglePlay" class="mr-10">
+          {{ isAudioPlaying ? "Stop" : "Play" }}
+        </button>
+        <div class="flex items-center gap-2">
+          <label for="range">Bpm: {{ audioBpm }}</label>
+          <input
+            type="range"
+            v-model="audioBpm"
+            min="40"
+            max="400"
+            step="5"
+            name="range"
+          />
+        </div>
+      </div>
+
+      <!-- 新增進階和弦推薦 -->
+      <div
+        v-if="chordInput && chordNotes && chordNotes.length > 0"
+        class="chord-recommendations"
+      >
+        <div
+          v-if="lastInputChord"
+          class="flex items-center gap-3"
         >
-          {{ chord }}
-        </li>
-      </ul>
-    </div>
-    <button
-      v-if="lastInputChord"
-      @click="resetChordInput"
-    >
-      Back to {{ lastInputChord }}
-    </button>
+          <button
 
-    <div
-      v-if="chordNotes && chordNotes.length > 0"
-      class="section-audio"
-    >
-      <hr>
-      <button @click="togglePlay">
-        {{ isAudioPlaying ? "Stop" : "Play" }}
-      </button>
-    </div>
-
-    <!-- 新增 audioBpm 控制項 -->
-    <div v-show="chordInput" class="audio-bpm-control">
-      <p>Bpm: {{ audioBpm }}</p>
-      <input
-        type="range"
-        v-model="audioBpm"
-        min="40"
-        max="400"
-      />
-    </div>
-
-    <!-- 如果是 major，則顯示 Major Key 資訊 -->
-    <div v-if="majorKeyInfo" class="major-key-info">
-      <p>Major Key: {{ majorKeyInfo.tonic }}</p>
-      <p>Triads: {{ majorKeyInfo.triads.join(", ") }}</p>
-      <p>Seventh Chords: {{ majorKeyInfo.chords.join(", ") }}</p>
-    </div>
-
-    <!-- 如果是 minor，則顯示 Minor Key 資訊 -->
-    <div v-if="minorKeyInfo" class="minor-key-info">
-      <p>Minor Key: {{ minorKeyInfo.tonic }}</p>
-      <div>
-        <ul class="tabs">
-          <li
-            :class="{ active: activeTab === 'natural' }"
-            @click="activeTab = 'natural'"
+            @click="resetChordInput"
           >
-            Natural
-          </li>
+            Back to {{ lastInputChord }}
+          </button>
+        </div>
+
+        <div v-if="advancedChords.length">
+          <p>Advanced Chords (based on <mark>{{ chordInput }}</mark>):</p>
+          <ul class="chord-list">
+            <li
+              v-for="chord in advancedChords"
+              :key="chord"
+              @click="replaceChordInput(chord)"
+              class="chord chord--clickable"
+            >
+              {{ chord }}
+            </li>
+          </ul>
+        </div>
+        <div v-else>
+          <p>No advanced chords found for <mark>{{ chordInput }}</mark>.</p>
+        </div>
+      </div>
+
+      <!-- 如果是 major，則顯示 Major Key 資訊 -->
+      <div v-if="majorKeyInfo" class="major-key-info">
+        <p>Major Key: {{ majorKeyInfo.tonic }}</p>
+        <p>Triads: {{ majorKeyInfo.triads.join(", ") }}</p>
+        <p>Seventh Chords: {{ majorKeyInfo.chords.join(", ") }}</p>
+      </div>
+
+      <!-- 如果是 minor，則顯示 Minor Key 資訊 -->
+      <div v-if="minorKeyInfo" class="minor-key-info">
+        <p>Minor Key: {{ minorKeyInfo.tonic }}</p>
+        <div>
+          <ul class="tabs">
+            <li
+              :class="{ active: activeTab === 'natural' }"
+              @click="activeTab = 'natural'"
+            >
+              Natural
+            </li>
+            <li
+              :class="{ active: activeTab === 'harmonic' }"
+              @click="activeTab = 'harmonic'"
+            >
+              Harmonic
+            </li>
+            <li
+              :class="{ active: activeTab === 'melodic' }"
+              @click="activeTab = 'melodic'"
+            >
+              Melodic
+            </li>
+          </ul>
+          <div v-if="activeTab === 'natural'">
+            <p>Triads: {{ minorKeyInfo.natural.triads.join(", ") }}</p>
+            <p>Seventh Chords: {{ minorKeyInfo.natural.chords.join(", ") }}</p>
+          </div>
+          <div v-if="activeTab === 'harmonic'">
+            <p>Triads: {{ minorKeyInfo.harmonic.triads.join(", ") }}</p>
+            <p>Seventh Chords: {{ minorKeyInfo.harmonic.chords.join(", ") }}</p>
+          </div>
+          <div v-if="activeTab === 'melodic'">
+            <p>Triads: {{ minorKeyInfo.melodic.triads.join(", ") }}</p>
+            <p>Seventh Chords: {{ minorKeyInfo.melodic.chords.join(", ") }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 調整最近輸入和弦記錄為黏附面板 -->
+      <div class="recent-chords sticky-panel" v-if="recentChords.length">
+        <p>Recent:</p>
+        <ul class="chord-list flex flex-col items-start">
           <li
-            :class="{ active: activeTab === 'harmonic' }"
-            @click="activeTab = 'harmonic'"
+            v-for="(chord, index) in recentChords"
+            :key="index"
+            @click="replaceChordInput(chord)"
+            class="chord chord--clickable"
           >
-            Harmonic
-          </li>
-          <li
-            :class="{ active: activeTab === 'melodic' }"
-            @click="activeTab = 'melodic'"
-          >
-            Melodic
+            {{ chord }}
           </li>
         </ul>
-        <div v-if="activeTab === 'natural'">
-          <p>Triads: {{ minorKeyInfo.natural.triads.join(", ") }}</p>
-          <p>Seventh Chords: {{ minorKeyInfo.natural.chords.join(", ") }}</p>
-        </div>
-        <div v-if="activeTab === 'harmonic'">
-          <p>Triads: {{ minorKeyInfo.harmonic.triads.join(", ") }}</p>
-          <p>Seventh Chords: {{ minorKeyInfo.harmonic.chords.join(", ") }}</p>
-        </div>
-        <div v-if="activeTab === 'melodic'">
-          <p>Triads: {{ minorKeyInfo.melodic.triads.join(", ") }}</p>
-          <p>Seventh Chords: {{ minorKeyInfo.melodic.chords.join(", ") }}</p>
-        </div>
       </div>
-    </div>
-
-    <!-- 調整最近輸入和弦記錄為黏附面板 -->
-    <div class="recent-chords sticky-panel" v-if="recentChords.length">
-      <p>Recent:</p>
-      <ul>
-        <li
-          v-for="(chord, index) in recentChords"
-          :key="index"
-          @click="replaceChordInput(chord)"
-          class="clickable-chord"
-        >
-          {{ chord }}
-        </li>
-      </ul>
     </div>
   </div>
 </template>
@@ -464,63 +485,67 @@ function addToRecentChords(chord: string) {
 }
 </script>
 
-<style scoped>
-.player {
-  position: relative;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+<style lang="scss" scoped>
+.chord-lookup-player {
+  background: linear-gradient(135deg, #32dacb 0%, #06b384 100%);
+  @apply backdrop-blur-2xl shadow-lg;
+  @apply relative rounded-5 py-8;
+  @apply border-1 border-solid border-[rgba(255,255,255,0.2)];
 }
 
-.chord-lookup {
-  margin-bottom: 10px;
+h2 {
+  text-align: center;
+  color: white;
+  font-size: 2.2em;
+  margin-bottom: 30px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-input[type="text"] {
-  width: 240px;
+.chord-lookup,
+.audio-bpm-control,
+.major-key-info,
+.minor-key-info,
+.chord-recommendations,
+.recent-chords {
+  @apply bg-[rgba(255,255,255,0.2)];
+  @apply rounded-4 border-1 border-solid border-[rgba(255,255,255,0.15)];
+  @apply py-4.5 px-3 mb-4.5;
+  @apply shadow-lg;
 }
 
-.chord-recommendations {
-  margin-top: 10px;
+input[type="text"], input[type="range"] {
+  background: rgba(255,255,255,0.7);
+  border-radius: 8px;
+  border: none;
+  padding: 8px 12px;
+  font-size: 1em;
+  margin-bottom: 8px;
 }
 
-.chord-recommendations ul {
-  list-style: none;
-  padding: 0;
+.chord-list {
+  @apply list-none p-0 m-0;
+  @apply flex flex-wrap gap-2;
 }
 
-.chord-recommendations li {
-  display: inline-block;
-  margin-right: 10px;
-  cursor: pointer;
-  color: blue;
-  text-decoration: underline;
+.chord {
+  @apply inline-block;
+  @apply bg-[rgba(255,255,255,0.2)] backdrop-blur-md;
+  @apply px-4 py-2 rounded-4;
+  @apply font-bold text-white;
+  @apply border border-solid border-[rgba(255,255,255,0.3)];
+
+  &:is(.sticky-panel *) {
+    @apply bg-#636363 text-#eee;
+  }
 }
 
-.chord-recommendations li:hover {
-  color: darkblue;
-}
+.chord.chord--clickable {
+  @apply cursor-pointer no-underline transition-colors transition duration-200;
+  @apply hover:(bg-[rgba(255,255,255,0.3)] text-[#048373]);
 
-.note-octave-control {
-  margin-top: 10px;
-}
-
-.octave-options {
-  display: flex;
-
-  gap: 14px;
-}
-
-.audio-bpm-control {
-  margin-top: 10px;
-}
-
-.major-key-info {
-  margin-top: 10px;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  background-color: #f9f9f9;
+  &:is(.sticky-panel *) {
+    @apply hover:text-#444;
+  }
 }
 
 .tabs {
@@ -538,6 +563,7 @@ input[type="text"] {
   border-bottom: none;
   background-color: #f9f9f9;
   margin-right: 5px;
+  border-radius: 8px 8px 0 0;
 }
 
 .tabs li.active {
@@ -546,38 +572,28 @@ input[type="text"] {
   border-bottom: 1px solid #fff;
 }
 
-.recent-chords {
-  margin-top: 10px;
-  width: 80px;
-}
-
-.recent-chords ul {
-  list-style: none;
-  padding: 0;
-}
-
-.recent-chords li {
-  display: block;
-  margin-right: 10px;
-  cursor: pointer;
-  color: green;
-  text-decoration: underline;
-}
-
-.recent-chords li:hover {
-  color: darkgreen;
-}
-
-/* 更新黏附面板樣式 */
 .sticky-panel {
-  position: absolute;
-  top: 0;
-  right: 0; /* Adjusted to stick to the right of the .player element */
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background: rgb(249 249 249 / 85%);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
+  @apply absolute top-0 right-0 z-1000;
+  @apply min-w-30 w-fit p-2.5 border border-solid border-[#ccc] rounded-4;
+  @apply bg-[rgba(255,255,255,0.65)] shadow-lg;
+}
+
+.major-key-info,
+.minor-key-info {
+  background: rgba(102,126,234,0.25);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+button {
+  @apply bg-[#006555] text-white border-none rounded-3;
+  @apply px-5 py-2 text-base font-bold;
+  @apply my-2 cursor-pointer shadow-md;
+  @apply transition-colors transition duration-200;
+  @apply hover:bg-[#00dfbc]
+}
+
+mark {
+  @apply bg-[#ffd700] text-[#222] rounded-6 px-1;
 }
 </style>
