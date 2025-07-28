@@ -32,7 +32,7 @@
           </div>
         </div>
         <div
-          v-show="chordNotes && chordNotes.length === 0" id="paper"
+          v-show="chordNotes && chordNotes.length !== 0" id="paper"
         />
       </div>
 
